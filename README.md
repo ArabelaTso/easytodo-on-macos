@@ -22,17 +22,25 @@ Core task actions:
 - Edit tasks
 - Delete tasks
 - Mark tasks complete
+- Mark priority with color
 
 Example list:
 
 ```text
 Today
 
-[ ] Read paper
-[ ] Reply email
-[x] Buy coffee
-[ ] Finish report
+[red] [ ] Read paper
+[orange] [ ] Reply email
+[blue] [x] Buy coffee
+[gray] [ ] Finish report
 ```
+
+Priority levels:
+
+- Red: 重要且紧急
+- Orange: 紧急但不重要
+- Blue: 不紧急但重要
+- Gray: 不紧急也不重要
 
 ### 2.2 Quick Add
 
@@ -141,9 +149,23 @@ Today
 + Add Task
 ```
 
-## 5. Technical Approach
+## 5. Build And Run
 
-Use Apple official frameworks only. The project should not need third-party dependencies.
+This repository is a Swift Package Manager macOS app.
+
+```sh
+swift build
+swift run DesktopTodo
+swift test
+```
+
+- `swift build` compiles the native macOS app.
+- `swift run DesktopTodo` launches the desktop todo window.
+- `swift test` runs the XCTest suite.
+
+## 6. Technical Approach
+
+Use Apple official frameworks only. The project does not need third-party dependencies.
 
 | Module | Technology |
 | --- | --- |
@@ -155,20 +177,21 @@ Use Apple official frameworks only. The project should not need third-party depe
 | Login Launch | SMAppService |
 | Window Management | AppKit + SwiftUI |
 
-## 6. Proposed Project Structure
+## 7. Project Structure
 
 ```text
-DesktopTodo/
+Sources/DesktopTodo/
 ├── App/
 │   └── DesktopTodoApp.swift
 ├── Models/
-│   └── Task.swift
+│   └── TodoTask.swift
 ├── Persistence/
-│   └── ModelContainer.swift
+│   └── PersistenceController.swift
 ├── Views/
 │   ├── TodoListView.swift
 │   ├── TaskRow.swift
 │   ├── AddTaskView.swift
+│   ├── MenuBarTodoView.swift
 │   └── SettingsView.swift
 ├── Managers/
 │   └── WindowManager.swift
