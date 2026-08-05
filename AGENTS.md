@@ -38,6 +38,8 @@ Add unit tests for model and persistence behavior, and UI tests for core flows w
 
 Git history currently uses short, imperative commit messages such as `Update readme, add brief introduction`. Continue that style: start with a verb and describe the changed area.
 
+For every commit, add a corresponding entry to the `README.md` Release Notes section in reverse chronological order.
+
 Pull requests should include a concise summary, screenshots or screen recordings for UI changes, linked issues when available, and the commands used to validate the change.
 
 ## Agent-Specific Instructions
