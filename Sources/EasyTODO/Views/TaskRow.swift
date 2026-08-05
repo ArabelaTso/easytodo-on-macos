@@ -9,6 +9,9 @@ struct TaskRow: View {
 
     @State private var isHoveringDelete = false
     @State private var isConfirmingDelete = false
+    @State private var isEditingTitle = false
+    @State private var draftTitle = ""
+    @FocusState private var isTitleFocused: Bool
 
     var body: some View {
         HStack(spacing: 10) {
@@ -27,14 +30,7 @@ struct TaskRow: View {
                     onCompletionChanged(task, oldValue, newValue)
                 }
 
-            TextField("Task", text: $task.title)
-                .textFieldStyle(.plain)
-                .font(.system(size: 15, weight: .regular, design: .default))
-                .strikethrough(task.isCompleted, color: .secondary)
-                .foregroundStyle(task.isCompleted ? .secondary : .primary)
-                .onChange(of: task.title) { _, _ in
-                    onUpdate()
-                }
+            titleContent
 
             PriorityPicker(priority: priorityBinding)
                 .opacity(task.isCompleted ? 0.6 : 1)
@@ -71,6 +67,51 @@ struct TaskRow: View {
         }
         .padding(.vertical, 7)
         .contentShape(Rectangle())
+    }
+
+    @ViewBuilder
+    private var titleContent: some View {
+        if isEditingTitle {
+            TextField("Task", text: $draftTitle)
+                .textFieldStyle(.plain)
+                .font(.system(size: 15, weight: .regular, design: .default))
+                .focused($isTitleFocused)
+                .onSubmit(commitTitleEdit)
+                .onChange(of: isTitleFocused) { _, isFocused in
+                    if !isFocused {
+                        commitTitleEdit()
+                    }
+                }
+                .onAppear {
+                    draftTitle = task.title
+                    DispatchQueue.main.async {
+                        isTitleFocused = true
+                    }
+                }
+        } else {
+            Text(task.title.isEmpty ? "Untitled task" : task.title)
+                .font(.system(size: 15, weight: .regular, design: .default))
+                .strikethrough(task.isCompleted, color: .secondary)
+                .foregroundStyle(task.isCompleted ? .secondary : .primary)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+                .onTapGesture(count: 2, perform: beginTitleEdit)
+                .help("Double-click to edit")
+        }
+    }
+
+    private func beginTitleEdit() {
+        draftTitle = task.title
+        isEditingTitle = true
+    }
+
+    private func commitTitleEdit() {
+        guard isEditingTitle else { return }
+
+        isEditingTitle = false
+        task.title = draftTitle
+        onUpdate()
     }
 
     private var confirmDeleteMessage: String {
