@@ -21,14 +21,25 @@ final class WindowManager: ObservableObject {
         window.isMovableByWindowBackground = true
         window.styleMask.insert(.fullSizeContentView)
         window.styleMask.insert(.resizable)
+        hideNativeWindowControls(in: window)
         window.styleMask.remove(.titled)
         window.collectionBehavior.insert(.canJoinAllSpaces)
         window.collectionBehavior.insert(.fullScreenAuxiliary)
+
+        DispatchQueue.main.async { [weak window] in
+            guard let window else { return }
+            self.hideNativeWindowControls(in: window)
+            window.styleMask.remove(.titled)
+        }
+
+        applyWindowSettings()
+    }
+
+    private func hideNativeWindowControls(in window: NSWindow) {
         window.standardWindowButton(.closeButton)?.isHidden = true
         window.standardWindowButton(.miniaturizeButton)?.isHidden = true
         window.standardWindowButton(.zoomButton)?.isHidden = true
-
-        applyWindowSettings()
+        window.standardWindowButton(.closeButton)?.superview?.isHidden = true
     }
 
     func applyWindowSettings() {

@@ -115,6 +115,25 @@ struct TodoListView: View {
         }
         .frame(minWidth: 280, idealWidth: 340, minHeight: 320, idealHeight: 480)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .contextMenu {
+            Button {
+                WindowManager.shared.closeMainWindow()
+            } label: {
+                Label("Close Window", systemImage: "xmark")
+            }
+
+            Button {
+                WindowManager.shared.minimizeMainWindow()
+            } label: {
+                Label("Minimize Window", systemImage: "minus")
+            }
+
+            Button {
+                WindowManager.shared.zoomMainWindow()
+            } label: {
+                Label("Zoom Window", systemImage: "arrow.up.left.and.arrow.down.right")
+            }
+        }
         .background(
             WindowAccessor { window in
                 WindowManager.shared.configureMainWindow(window)
@@ -223,8 +242,6 @@ struct TodoListView: View {
             }
             .buttonStyle(.borderless)
             .accessibilityLabel("Add task")
-
-            NoteWindowControls()
         }
         .padding(.horizontal, 16)
         .padding(.top, 16)
