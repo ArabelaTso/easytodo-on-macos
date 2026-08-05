@@ -1,233 +1,181 @@
-## 产品定位
+# Desktop Todo
 
-一句话：
+## 1. Product Positioning
 
-A simple todo list that always stays on your desktop.
+**One sentence:** A simple todo list that always stays on your desktop.
 
-三个关键词：
+**Keywords:**
 
-Always Visible（始终可见）
-Lightweight（轻量）
-Beautiful（美观）
+- Always Visible
+- Lightweight
+- Beautiful
 
-不是效率系统。
+This is not a productivity system, GTD tool, or Notion replacement. It is a focused todo list that stays visible on the desktop.
 
-不是 GTD。
+## 2. MVP Scope: V1.0
 
-不是 Notion。
+### 2.1 Todo List
 
-就是一张一直放在桌面的 Todo List。
+Core task actions:
 
-MVP 功能（V1.0）
+- Create tasks
+- Edit tasks
+- Delete tasks
+- Mark tasks complete
 
-我建议只做下面这些。
+Example list:
 
-① Todo 列表
+```text
 Today
 
-□ Read paper
+[ ] Read paper
+[ ] Reply email
+[x] Buy coffee
+[ ] Finish report
+```
 
-□ Reply email
+### 2.2 Quick Add
 
-☑ Buy coffee
+Users can add a task by:
 
-□ Finish report
+- Clicking the final `+ Add Task` row
+- Pressing `Cmd + N`
+- Typing directly into the new task field
 
-支持：
+### 2.3 Auto Save
 
-新建
-编辑
-删除
-勾选完成
-② 快速新增
+There is no manual save action. Task and setting changes are saved automatically with SwiftData as the user types or edits.
 
-点击最后一行
+### 2.4 Drag Sorting
 
+Task order is part of the core experience. SwiftUI `.onMove()` can support manual reordering.
+
+```text
+[=] Read paper
+[=] Meeting
+[=] Gym
+```
+
+### 2.5 Desktop Mode
+
+Desktop mode is the defining product feature.
+
+Window behavior:
+
+- Optional hidden Dock icon
+- Translucent window background
+- Optional always-on-top mode
+- Optional non-focus-stealing behavior
+
+Example placement:
+
+```text
++-------------+
+| Today       |
+| [ ] Paper   |
+| [ ] Gym     |
+| [ ] Meeting |
++-------------+
+```
+
+### 2.6 Launch At Login
+
+The app should be able to open automatically when the user logs into macOS.
+
+### 2.7 Menu Bar
+
+Menu bar state should show progress, such as `3 / 7`.
+
+Clicking the menu bar item opens a compact task list:
+
+```text
+Today
+
+[ ] Paper
+[ ] Review
+[ ] Meeting
+```
+
+## 3. Settings
+
+Keep settings minimal.
+
+### 3.1 General
+
+- Launch at Login
+- Always on Top
+- Show in Menu Bar
+
+### 3.2 Transparency
+
+- 100%
+- 90%
+- 80%
+
+### 3.3 Theme
+
+- System
+- Light
+- Dark
+
+## 4. UI Direction
+
+The interface should feel native to macOS.
+
+Visual guidelines:
+
+- Font: SF Pro
+- Background: Material
+- Corner radius: 16
+- Shadow: subtle
+
+Example layout:
+
+```text
+Today
+----------------
+[ ] Read paper
+[ ] Reply reviewer
+[x] Meeting
+----------------
 + Add Task
+```
 
-或者快捷键：
+## 5. Technical Approach
 
-⌘ N
+Use Apple official frameworks only. The project should not need third-party dependencies.
 
-直接输入。
+| Module | Technology |
+| --- | --- |
+| UI | SwiftUI |
+| Data | SwiftData |
+| Settings | AppStorage |
+| Widget | WidgetKit, later |
+| Menu Bar | MenuBarExtra |
+| Login Launch | SMAppService |
+| Window Management | AppKit + SwiftUI |
 
-③ 自动保存
+## 6. Proposed Project Structure
 
-不用 Save。
-
-每输入一个字：
-
-SwiftData
-
-自动保存。
-
-④ 拖拽排序
-☰ Read paper
-
-☰ Meeting
-
-☰ Gym
-
-SwiftUI 已经支持：
-
-.onMove()
-
-这是 Todo 的核心体验之一。
-
-⑤ Desktop Mode
-
-这是整个产品最大的特点。
-
-窗口：
-
-✅ 无 Dock Icon（可选）
-
-✅ 半透明
-
-✅ Always On Top（可选）
-
-✅ 不抢焦点（可选）
-
-可以一直放在桌面右侧：
-
-┌─────────────┐
-
- Today
-
- □ Paper
-
- □ Gym
-
- □ Meeting
-
-└─────────────┘
-⑥ 开机启动
-
-用户打开电脑：
-
-Todo 自动出现。
-
-这是桌面工具应该有的。
-
-⑦ Menu Bar
-
-菜单栏：
-
-✔ 3 / 7
-
-点一下：
-
-Today
-
-□ Paper
-
-□ Review
-
-□ Meeting
-
-不用打开主窗口。
-
-设置（不用很多）
-General
-
-✓ Launch at Login
-
-✓ Always on Top
-
-✓ Show in Menu Bar
-
-Transparency
-
-○ 100%
-
-○ 90%
-
-○ 80%
-
-Theme
-
-○ System
-
-○ Light
-
-○ Dark
-
-就够了。
-
-UI
-
-建议像 macOS 原生。
-
-Today
-
-────────────────
-
-○ Read paper
-
-○ Reply reviewer
-
-✓ Meeting
-
-────────────────
-
-+ Add Task
-
-字体：
-
-SF Pro
-
-背景：
-
-Material
-
-圆角：
-
-16
-
-阴影：
-
-轻一点。
-
-技术方案
-
-全部使用苹果官方框架。
-
-模块	技术
-UI	SwiftUI
-数据	SwiftData
-设置	AppStorage
-Widget	WidgetKit（后续）
-菜单栏	MenuBarExtra
-登录启动	SMAppService
-窗口管理	AppKit + SwiftUI
-
-整个项目不需要任何第三方依赖。
-
-项目结构
+```text
 DesktopTodo/
-│
 ├── App/
-│     DesktopTodoApp.swift
-│
+│   └── DesktopTodoApp.swift
 ├── Models/
-│     Task.swift
-│
+│   └── Task.swift
 ├── Persistence/
-│     ModelContainer.swift
-│
+│   └── ModelContainer.swift
 ├── Views/
-│     TodoListView.swift
-│     TaskRow.swift
-│     AddTaskView.swift
-│     SettingsView.swift
-│
+│   ├── TodoListView.swift
+│   ├── TaskRow.swift
+│   ├── AddTaskView.swift
+│   └── SettingsView.swift
 ├── Managers/
-│     WindowManager.swift
-│
+│   └── WindowManager.swift
 ├── Components/
-│     CheckBox.swift
-│     BlurBackground.swift
-│
+│   ├── CheckBox.swift
+│   └── BlurBackground.swift
 └── Assets/
+```
 
-这样维护起来会很舒服。
+This structure keeps app entry points, data models, persistence, views, platform managers, reusable components, and assets separate.
