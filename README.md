@@ -3,7 +3,7 @@
   <h1>EasyTODO: A minimalist desktop todo list for macOS</h1>
   <h2><strong>An easy to use desktop todo list for macOS.</strong></h2>
   <p>
-    <a href="https://github.com/ArabelaTso/easytodo-on-macos/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/ArabelaTso/easytodo-on-macos?style=for-the-badge&label=release&color=2da44e" /></a>
+    <a href="https://github.com/ArabelaTso/easytodo-on-macos/releases/latest"><img alt="Download latest DMG" src="https://img.shields.io/badge/download-macOS%20DMG-2da44e?style=for-the-badge&logo=github&logoColor=white" /></a>
     <img alt="macOS 14+" src="https://img.shields.io/badge/macOS-14%2B-111827?style=for-the-badge&logo=apple&logoColor=white" />
     <img alt="Swift 6" src="https://img.shields.io/badge/Swift-6-F05138?style=for-the-badge&logo=swift&logoColor=white" />
     <img alt="SwiftUI" src="https://img.shields.io/badge/SwiftUI-native-0A84FF?style=for-the-badge" />
