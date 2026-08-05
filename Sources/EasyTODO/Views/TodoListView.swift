@@ -16,12 +16,15 @@ struct TodoListView: View {
     @AppStorage(EasyTODOSettings.transparency) private var transparency = 0.90
 
     @State private var newTaskTitle = ""
+    @State private var headerTaskTitle = ""
     @State private var selectedDate = Date()
     @State private var isCalendarPresented = false
+    @State private var isHeaderQuickAddPresented = false
     @State private var deletedTaskToRestore: DeletedTaskSnapshot?
     @State private var undoKeyMonitor: Any?
     @State private var fireworksTrigger = 0
     @FocusState private var isAddingTaskFocused: Bool
+    @FocusState private var isHeaderQuickAddFocused: Bool
 
     private let calendar = Calendar.current
 
@@ -111,6 +114,12 @@ struct TodoListView: View {
                     focus: $isAddingTaskFocused,
                     onSubmit: addTask
                 )
+            }
+
+            if isHeaderQuickAddPresented {
+                headerQuickAddPanel
+                    .transition(.scale(scale: 0.94, anchor: .topTrailing).combined(with: .opacity))
+                    .zIndex(2)
             }
 
             CompletionFireworksView(trigger: fireworksTrigger)
@@ -270,7 +279,7 @@ struct TodoListView: View {
             Spacer()
 
             Button {
-                isAddingTaskFocused = true
+                showHeaderQuickAdd()
             } label: {
                 Image(systemName: "plus")
                     .font(.system(size: 14, weight: .semibold))
@@ -282,6 +291,81 @@ struct TodoListView: View {
         .padding(.horizontal, 16)
         .padding(.top, 16)
         .padding(.bottom, 12)
+    }
+
+    private var headerQuickAddPanel: some View {
+        HStack(spacing: 9) {
+            Image(systemName: "plus")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.secondary)
+
+            TextField("Add task...", text: $headerTaskTitle)
+                .textFieldStyle(.plain)
+                .font(.system(size: 14, weight: .medium))
+                .focused($isHeaderQuickAddFocused)
+                .onSubmit(addHeaderTask)
+
+            Text("Return")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 7)
+                .padding(.vertical, 3)
+                .background {
+                    Capsule()
+                        .fill(.primary.opacity(0.06))
+                }
+        }
+        .padding(.horizontal, 13)
+        .frame(width: 246, height: 44)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .background {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(nsColor: .windowBackgroundColor).opacity(0.58))
+        }
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(.white.opacity(0.18), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.16), radius: 18, x: 0, y: 10)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+        .padding(.top, 58)
+        .padding(.trailing, 14)
+        .onAppear {
+            DispatchQueue.main.async {
+                isHeaderQuickAddFocused = true
+            }
+        }
+        .onExitCommand {
+            dismissHeaderQuickAdd()
+        }
+    }
+
+    private func showHeaderQuickAdd() {
+        withAnimation(.spring(response: 0.24, dampingFraction: 0.82)) {
+            isHeaderQuickAddPresented = true
+        }
+
+        DispatchQueue.main.async {
+            isHeaderQuickAddFocused = true
+        }
+    }
+
+    private func dismissHeaderQuickAdd() {
+        headerTaskTitle = ""
+        isHeaderQuickAddFocused = false
+
+        withAnimation(.easeOut(duration: 0.14)) {
+            isHeaderQuickAddPresented = false
+        }
+    }
+
+    private func addHeaderTask() {
+        guard addTask(title: headerTaskTitle, for: selectedDate) != nil else {
+            isHeaderQuickAddFocused = true
+            return
+        }
+
+        dismissHeaderQuickAdd()
     }
 
     private var transparencyTitle: String {
