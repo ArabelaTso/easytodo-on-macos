@@ -7,7 +7,6 @@ struct EasyTODOApp: App {
 
     private let modelContainer: ModelContainer
 
-    @AppStorage(EasyTODOSettings.showMenuBar) private var showMenuBar = true
     @AppStorage(EasyTODOSettings.theme) private var theme = ThemeOption.light.rawValue
 
     init() {
@@ -15,6 +14,7 @@ struct EasyTODOApp: App {
 
         do {
             modelContainer = try PersistenceController.modelContainer()
+            MenuBarManager.shared.configure(modelContainer: modelContainer)
             QuickAddPanelManager.shared.configure(modelContainer: modelContainer)
         } catch {
             fatalError("Unable to create SwiftData container: \(error)")
@@ -24,7 +24,6 @@ struct EasyTODOApp: App {
     @SceneBuilder
     var body: some Scene {
         mainWindow
-        menuBar
         settings
     }
 
@@ -50,18 +49,6 @@ struct EasyTODOApp: App {
                 .keyboardShortcut("n", modifiers: .command)
             }
         }
-    }
-
-    private var menuBar: some Scene {
-        MenuBarExtra(isInserted: $showMenuBar) {
-            MenuBarTodoView()
-                .modelContainer(modelContainer)
-                .preferredColorScheme(preferredColorScheme)
-        } label: {
-            MenuBarLabelView()
-                .modelContainer(modelContainer)
-        }
-        .menuBarExtraStyle(.window)
     }
 
     private var settings: some Scene {

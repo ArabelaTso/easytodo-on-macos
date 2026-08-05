@@ -1,4 +1,3 @@
-import AppKit
 import SwiftData
 import SwiftUI
 
@@ -80,27 +79,13 @@ struct MenuBarTodoView: View {
                 }
             }
 
-            Divider()
-
-            HStack {
-                Button("Show") {
-                    WindowManager.shared.showMainWindow()
-                }
-
-                Button("New Task") {
-                    WindowManager.shared.showMainWindow()
-                    NotificationCenter.default.post(name: .easyTODOFocusNewTask, object: nil)
-                }
-
-                Spacer()
-
-                Button("Quit") {
-                    NSApp.terminate(nil)
-                }
-            }
         }
         .padding(14)
         .frame(width: 260)
+        .contentShape(Rectangle())
+        .onTapGesture(count: 2) {
+            WindowManager.shared.showMainWindow()
+        }
     }
 
     private func saveChanges() {
