@@ -16,6 +16,7 @@ struct EasyTODOApp: App {
             modelContainer = try PersistenceController.modelContainer()
             MenuBarManager.shared.configure(modelContainer: modelContainer)
             QuickAddPanelManager.shared.configure(modelContainer: modelContainer)
+            WidgetWindowManager.shared.configure(modelContainer: modelContainer)
         } catch {
             fatalError("Unable to create SwiftData container: \(error)")
         }
@@ -47,6 +48,12 @@ struct EasyTODOApp: App {
                     NotificationCenter.default.post(name: .easyTODOFocusNewTask, object: nil)
                 }
                 .keyboardShortcut("n", modifiers: .command)
+            }
+
+            CommandGroup(after: .newItem) {
+                Button("Open Widget") {
+                    WidgetWindowManager.shared.showWidget()
+                }
             }
         }
     }

@@ -79,6 +79,28 @@ struct MenuBarTodoView: View {
                 }
             }
 
+            Divider()
+
+            HStack(spacing: 8) {
+                Button {
+                    MenuBarManager.shared.closePopover()
+                    WidgetWindowManager.shared.toggleWidget()
+                } label: {
+                    Label("Widget", systemImage: "rectangle.on.rectangle")
+                }
+                .buttonStyle(.bordered)
+
+                Button {
+                    MenuBarManager.shared.closePopover()
+                    WindowManager.shared.showMainWindow()
+                } label: {
+                    Label("Full App", systemImage: "arrow.up.right.square")
+                }
+                .buttonStyle(.bordered)
+            }
+            .labelStyle(.titleAndIcon)
+            .controlSize(.small)
+
         }
         .padding(14)
         .frame(width: 260)

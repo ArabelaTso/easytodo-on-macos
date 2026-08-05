@@ -149,6 +149,13 @@ struct TodoListView: View {
                 Label("Zoom Window", systemImage: "arrow.up.left.and.arrow.down.right")
             }
 
+            Button {
+                WidgetWindowManager.shared.showWidget()
+                WindowManager.shared.closeMainWindow()
+            } label: {
+                Label("Change to Widget", systemImage: "rectangle.on.rectangle")
+            }
+
             Divider()
 
             Button {
