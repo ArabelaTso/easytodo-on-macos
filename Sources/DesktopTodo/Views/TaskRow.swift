@@ -4,6 +4,7 @@ import SwiftUI
 struct TaskRow: View {
     @Bindable var task: TodoTask
     var onUpdate: () -> Void
+    var onCompletionChanged: (_ oldValue: Bool, _ newValue: Bool) -> Void
     var onDelete: () -> Void
 
     var body: some View {
@@ -19,8 +20,8 @@ struct TaskRow: View {
                 .frame(width: 14)
 
             CheckBox(isOn: $task.isCompleted)
-                .onChange(of: task.isCompleted) { _, _ in
-                    onUpdate()
+                .onChange(of: task.isCompleted) { oldValue, newValue in
+                    onCompletionChanged(oldValue, newValue)
                 }
 
             TextField("Task", text: $task.title)

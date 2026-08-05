@@ -16,6 +16,7 @@ struct TodoListView: View {
     @AppStorage(DesktopTodoSettings.transparency) private var transparency = 0.90
 
     @State private var newTaskTitle = ""
+    @State private var fireworksTrigger = 0
     @FocusState private var isAddingTaskFocused: Bool
 
     private var completedCount: Int {
@@ -34,7 +35,11 @@ struct TodoListView: View {
 
                 List {
                     ForEach(tasks) { task in
-                        TaskRow(task: task, onUpdate: saveChanges) {
+                        TaskRow(
+                            task: task,
+                            onUpdate: saveChanges,
+                            onCompletionChanged: handleCompletionChange
+                        ) {
                             delete(task)
                         }
                         .listRowInsets(EdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 10))
@@ -55,6 +60,8 @@ struct TodoListView: View {
                     onSubmit: addTask
                 )
             }
+
+            CompletionFireworksView(trigger: fireworksTrigger)
         }
         .frame(minWidth: 280, idealWidth: 340, minHeight: 320, idealHeight: 480)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -154,6 +161,15 @@ struct TodoListView: View {
         }
 
         saveChanges()
+    }
+
+    private func handleCompletionChange(oldValue: Bool, newValue: Bool) {
+        saveChanges()
+
+        guard !oldValue && newValue else { return }
+
+        CompletionFeedbackPlayer.playTaskCompletedSound()
+        fireworksTrigger += 1
     }
 
     private func saveChanges() {

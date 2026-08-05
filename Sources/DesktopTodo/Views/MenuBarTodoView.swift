@@ -35,8 +35,13 @@ struct MenuBarTodoView: View {
             } else {
                 ForEach(tasks.prefix(8)) { task in
                     Button {
+                        let wasCompleted = task.isCompleted
                         task.isCompleted.toggle()
                         saveChanges()
+
+                        if !wasCompleted && task.isCompleted {
+                            CompletionFeedbackPlayer.playTaskCompletedSound()
+                        }
                     } label: {
                         HStack {
                             Circle()
