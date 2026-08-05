@@ -13,7 +13,7 @@ struct TodoListView: View {
     @AppStorage(EasyTODOSettings.alwaysOnTop) private var alwaysOnTop = true
     @AppStorage(EasyTODOSettings.hiddenDockIcon) private var hiddenDockIcon = false
     @AppStorage(EasyTODOSettings.showMenuBar) private var showMenuBar = true
-    @AppStorage(EasyTODOSettings.transparency) private var transparency = 0.90
+    @AppStorage(EasyTODOSettings.transparency) private var transparency = 0.80
 
     @State private var newTaskTitle = ""
     @State private var headerTaskTitle = ""
@@ -160,8 +160,8 @@ struct TodoListView: View {
 
             Menu {
                 transparencyMenuButton(title: "100%", value: 1.0)
-                transparencyMenuButton(title: "90%", value: 0.90)
                 transparencyMenuButton(title: "80%", value: 0.80)
+                transparencyMenuButton(title: "50%", value: 0.50)
             } label: {
                 Label("Transparency: \(transparencyTitle)", systemImage: "slider.horizontal.3")
             }

@@ -50,7 +50,7 @@ final class WindowManager: ObservableObject {
         let transparency = defaults.double(forKey: EasyTODOSettings.transparency)
 
         window.level = alwaysOnTop ? .floating : .normal
-        window.alphaValue = min(max(transparency, 0.80), 1.0)
+        window.alphaValue = min(max(transparency, 0.50), 1.0)
     }
 
     func applyActivationPolicy() {

@@ -5,7 +5,7 @@ struct SettingsView: View {
     @AppStorage(EasyTODOSettings.alwaysOnTop) private var alwaysOnTop = true
     @AppStorage(EasyTODOSettings.showMenuBar) private var showMenuBar = true
     @AppStorage(EasyTODOSettings.hiddenDockIcon) private var hiddenDockIcon = false
-    @AppStorage(EasyTODOSettings.transparency) private var transparency = 0.90
+    @AppStorage(EasyTODOSettings.transparency) private var transparency = 0.80
     @AppStorage(EasyTODOSettings.theme) private var theme = ThemeOption.light.rawValue
 
     @State private var loginItemMessage: String?
@@ -33,8 +33,8 @@ struct SettingsView: View {
             Section("Transparency") {
                 Picker("Window", selection: $transparency) {
                     Text("100%").tag(1.0)
-                    Text("90%").tag(0.90)
                     Text("80%").tag(0.80)
+                    Text("50%").tag(0.50)
                 }
                 .pickerStyle(.segmented)
             }

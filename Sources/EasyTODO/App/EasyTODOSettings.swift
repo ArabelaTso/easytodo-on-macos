@@ -15,9 +15,13 @@ enum EasyTODOSettings {
             alwaysOnTop: true,
             showMenuBar: true,
             hiddenDockIcon: false,
-            transparency: 0.90,
+            transparency: 0.80,
             theme: ThemeOption.light.rawValue
         ])
+
+        if abs(defaults.double(forKey: transparency) - 0.90) < 0.001 {
+            defaults.set(0.80, forKey: transparency)
+        }
 
         if ThemeOption(rawValue: defaults.string(forKey: theme) ?? "") == nil {
             defaults.set(ThemeOption.light.rawValue, forKey: theme)
