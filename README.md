@@ -37,10 +37,9 @@ Today
 
 Priority levels:
 
-- Red: 重要且紧急
-- Orange: 紧急但不重要
-- Blue: 不紧急但重要
-- Gray: 不紧急也不重要
+- Four solid color dots: red, yellow, green, gray
+- The UI shows color only, with no written priority names
+- New tasks default to red
 
 ### 2.2 Quick Add
 

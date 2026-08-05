@@ -9,18 +9,27 @@ struct PriorityPicker: View {
                 Button {
                     priority = option
                 } label: {
-                    Label(option.title, systemImage: option.systemImage)
+                    Circle()
+                        .fill(option.color)
+                        .frame(width: 12, height: 12)
+                        .padding(.vertical, 3)
                 }
+                .accessibilityLabel("Priority color \(option.rawValue)")
             }
         } label: {
-            Image(systemName: priority.systemImage)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(priority.color)
-                .frame(width: 24, height: 24)
-                .contentShape(Rectangle())
+            Circle()
+                .fill(priority.color)
+                .frame(width: 12, height: 12)
+                .padding(6)
+                .overlay {
+                    Circle()
+                        .strokeBorder(priority.color.opacity(0.45), lineWidth: 1.5)
+                }
+                .shadow(color: priority.color.opacity(0.26), radius: 4, x: 0, y: 1)
         }
         .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
         .fixedSize()
-        .accessibilityLabel("Priority: \(priority.title)")
+        .accessibilityLabel("Change priority color")
     }
 }

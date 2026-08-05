@@ -8,47 +8,21 @@ enum TaskPriority: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var title: String {
-        switch self {
-        case .importantUrgent:
-            "重要且紧急"
-        case .urgentNotImportant:
-            "紧急但不重要"
-        case .notUrgentImportant:
-            "不紧急但重要"
-        case .notUrgentNotImportant:
-            "不紧急也不重要"
-        }
-    }
-
     var color: Color {
         switch self {
         case .importantUrgent:
-            Color.red
+            Color(red: 0.78, green: 0.18, blue: 0.15)
         case .urgentNotImportant:
-            Color.orange
+            Color(red: 0.86, green: 0.62, blue: 0.18)
         case .notUrgentImportant:
-            Color.blue
+            Color(red: 0.22, green: 0.54, blue: 0.36)
         case .notUrgentNotImportant:
-            Color.gray
-        }
-    }
-
-    var systemImage: String {
-        switch self {
-        case .importantUrgent:
-            "flame.fill"
-        case .urgentNotImportant:
-            "clock.badge.exclamationmark.fill"
-        case .notUrgentImportant:
-            "star.circle.fill"
-        case .notUrgentNotImportant:
-            "circle.fill"
+            Color(red: 0.43, green: 0.45, blue: 0.48)
         }
     }
 
     static func normalized(from rawValue: String?) -> TaskPriority {
-        guard let rawValue else { return .notUrgentNotImportant }
+        guard let rawValue else { return .importantUrgent }
 
         if let priority = TaskPriority(rawValue: rawValue) {
             return priority
@@ -64,7 +38,7 @@ enum TaskPriority: String, CaseIterable, Identifiable {
         case "low":
             return .notUrgentNotImportant
         default:
-            return .notUrgentNotImportant
+            return .importantUrgent
         }
     }
 }

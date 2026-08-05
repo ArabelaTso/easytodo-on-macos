@@ -50,10 +50,6 @@ struct MenuBarTodoView: View {
                                 .lineLimit(1)
 
                             Spacer()
-
-                            Text(task.priority.title)
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
                         }
                     }
                     .buttonStyle(.plain)

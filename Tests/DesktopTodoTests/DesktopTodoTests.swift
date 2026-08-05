@@ -10,7 +10,7 @@ final class DesktopTodoTests: XCTestCase {
         XCTAssertEqual(task.title, "Read paper")
         XCTAssertFalse(task.isCompleted)
         XCTAssertEqual(task.sortOrder, 2)
-        XCTAssertEqual(task.priority, .notUrgentNotImportant)
+        XCTAssertEqual(task.priority, .importantUrgent)
     }
 
     func testTaskCanStorePriority() {
@@ -27,6 +27,7 @@ final class DesktopTodoTests: XCTestCase {
         XCTAssertEqual(TaskPriority.normalized(from: "urgent"), .importantUrgent)
         XCTAssertEqual(TaskPriority.normalized(from: "high"), .notUrgentImportant)
         XCTAssertEqual(TaskPriority.normalized(from: "normal"), .notUrgentNotImportant)
+        XCTAssertEqual(TaskPriority.normalized(from: nil), .importantUrgent)
     }
 
     func testInMemoryContainerPersistsInsertedTask() throws {

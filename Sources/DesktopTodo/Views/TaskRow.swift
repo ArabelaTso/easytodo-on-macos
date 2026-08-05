@@ -30,6 +30,7 @@ struct TaskRow: View {
                 .foregroundStyle(task.isCompleted ? .secondary : .primary)
 
             PriorityPicker(priority: priorityBinding)
+                .opacity(task.isCompleted ? 0.6 : 1)
 
             Button(role: .destructive) {
                 onDelete()

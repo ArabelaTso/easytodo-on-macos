@@ -14,7 +14,7 @@ final class TodoTask {
         isCompleted: Bool = false,
         sortOrder: Int = 0,
         createdAt: Date = .now,
-        priority: TaskPriority = .notUrgentNotImportant
+        priority: TaskPriority = .importantUrgent
     ) {
         self.title = title
         self.isCompleted = isCompleted
