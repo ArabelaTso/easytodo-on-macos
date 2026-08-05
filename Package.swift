@@ -12,7 +12,10 @@ let package = Package(
     ],
     targets: [
         .executableTarget(
-            name: "EasyTODO"
+            name: "EasyTODO",
+            resources: [
+                .process("Resources")
+            ]
         ),
         .testTarget(
             name: "EasyTODOTests",

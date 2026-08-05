@@ -49,7 +49,7 @@ struct TodoListView: View {
 
     var body: some View {
         ZStack {
-            BlurBackground()
+            noteSurface
 
             VStack(spacing: 0) {
                 header
@@ -169,6 +169,25 @@ struct TodoListView: View {
         }
     }
 
+    private var noteSurface: some View {
+        ZStack {
+            Color(nsColor: .windowBackgroundColor)
+
+            BlurBackground()
+                .opacity(0.10)
+
+            LinearGradient(
+                colors: [
+                    Color(red: 0.98, green: 0.78, blue: 0.38).opacity(0.16),
+                    Color(red: 0.95, green: 0.89, blue: 0.70).opacity(0.08),
+                    Color.clear
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+        .ignoresSafeArea()
+    }
 
     private var header: some View {
         HStack(alignment: .firstTextBaseline) {
@@ -184,6 +203,7 @@ struct TodoListView: View {
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundStyle(.secondary)
                     }
+
                     Text("\(completedCount) / \(displayedTasks.count) complete - Open calendar")
                         .font(.system(size: 12, weight: .medium, design: .default))
                         .foregroundStyle(.secondary)
