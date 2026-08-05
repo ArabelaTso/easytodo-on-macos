@@ -23,6 +23,14 @@ struct TodoListView: View {
         tasks.filter(\.isCompleted).count
     }
 
+    private var orderedTasks: [TodoTask] {
+        TaskListOrdering.ordered(tasks)
+    }
+
+    private var hasActiveAndCompletedTasks: Bool {
+        tasks.contains { !$0.isCompleted } && tasks.contains { $0.isCompleted }
+    }
+
     var body: some View {
         ZStack {
             BlurBackground()
@@ -34,13 +42,19 @@ struct TodoListView: View {
                     .padding(.horizontal, 14)
 
                 List {
-                    ForEach(tasks) { task in
-                        TaskRow(
-                            task: task,
-                            onUpdate: saveChanges,
-                            onCompletionChanged: handleCompletionChange
-                        ) {
-                            delete(task)
+                    ForEach(orderedTasks) { task in
+                        VStack(spacing: 0) {
+                            if shouldShowCompletedSeparator(before: task) {
+                                completedSeparator
+                            }
+
+                            TaskRow(
+                                task: task,
+                                onUpdate: saveChanges,
+                                onCompletionChanged: handleCompletionChange
+                            ) {
+                                delete(task)
+                            }
                         }
                         .listRowInsets(EdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 10))
                         .listRowSeparator(.hidden)
@@ -133,6 +147,19 @@ struct TodoListView: View {
         .padding(.bottom, 12)
     }
 
+    private var completedSeparator: some View {
+        Rectangle()
+            .fill(.secondary.opacity(0.24))
+            .frame(height: 1)
+            .padding(.vertical, 9)
+            .padding(.leading, 28)
+    }
+
+    private func shouldShowCompletedSeparator(before task: TodoTask) -> Bool {
+        guard hasActiveAndCompletedTasks, task.isCompleted else { return false }
+        return orderedTasks.first(where: \.isCompleted) === task
+    }
+
     private func addTask() {
         let trimmedTitle = newTaskTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedTitle.isEmpty else {
@@ -153,17 +180,17 @@ struct TodoListView: View {
     }
 
     private func moveTasks(from source: IndexSet, to destination: Int) {
-        var reorderedTasks = tasks
-        reorderedTasks.move(fromOffsets: source, toOffset: destination)
-
-        for (index, task) in reorderedTasks.enumerated() {
-            task.sortOrder = index
-        }
-
+        TaskListOrdering.moveTasks(from: source, to: destination, in: tasks)
         saveChanges()
     }
 
-    private func handleCompletionChange(oldValue: Bool, newValue: Bool) {
+    private func handleCompletionChange(task: TodoTask, oldValue: Bool, newValue: Bool) {
+        if !oldValue && newValue {
+            TaskListOrdering.moveCompletedTaskToFront(task, in: tasks)
+        } else if oldValue && !newValue {
+            TaskListOrdering.moveReactivatedTaskToEnd(task, in: tasks)
+        }
+
         saveChanges()
 
         guard !oldValue && newValue else { return }

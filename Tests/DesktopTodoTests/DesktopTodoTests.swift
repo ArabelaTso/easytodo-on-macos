@@ -44,6 +44,24 @@ final class DesktopTodoTests: XCTestCase {
         XCTAssertEqual(tasks.first?.title, "Reply email")
     }
 
+    func testNewlyCompletedTaskMovesToFrontOfCompletedTasks() {
+        let first = TodoTask(title: "Read paper", sortOrder: 0)
+        let second = TodoTask(title: "Reply email", sortOrder: 1)
+        let third = TodoTask(title: "Finish report", sortOrder: 2)
+        let tasks = [first, second, third]
+
+        second.isCompleted = true
+        TaskListOrdering.moveCompletedTaskToFront(second, in: tasks)
+
+        third.isCompleted = true
+        TaskListOrdering.moveCompletedTaskToFront(third, in: tasks)
+
+        XCTAssertEqual(
+            TaskListOrdering.ordered(tasks).map(\.title),
+            ["Read paper", "Finish report", "Reply email"]
+        )
+    }
+
     func testPersistentContainerReopensSavedTask() throws {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("DesktopTodoTests-\(UUID().uuidString)", isDirectory: true)

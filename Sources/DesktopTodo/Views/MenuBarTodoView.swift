@@ -13,6 +13,10 @@ struct MenuBarTodoView: View {
         tasks.filter(\.isCompleted).count
     }
 
+    private var orderedTasks: [TodoTask] {
+        TaskListOrdering.ordered(tasks)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
@@ -33,10 +37,17 @@ struct MenuBarTodoView: View {
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
-                ForEach(tasks.prefix(8)) { task in
+                ForEach(orderedTasks.prefix(8)) { task in
                     Button {
                         let wasCompleted = task.isCompleted
                         task.isCompleted.toggle()
+
+                        if !wasCompleted && task.isCompleted {
+                            TaskListOrdering.moveCompletedTaskToFront(task, in: tasks)
+                        } else if wasCompleted && !task.isCompleted {
+                            TaskListOrdering.moveReactivatedTaskToEnd(task, in: tasks)
+                        }
+
                         saveChanges()
 
                         if !wasCompleted && task.isCompleted {

@@ -23,6 +23,7 @@ Core task actions:
 - Delete tasks
 - Mark tasks complete
 - Mark priority with color
+- Move newly completed tasks to the front of the completed group
 
 Example list:
 
