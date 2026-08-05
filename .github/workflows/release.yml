@@ -1,0 +1,83 @@
+name: Release macOS App
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version, for example 0.1.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build DMG and Publish Release
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve release version
+        id: release
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            tag="${GITHUB_REF_NAME}"
+            version="${tag#v}"
+          else
+            version="${{ inputs.version }}"
+            tag="v${version}"
+          fi
+
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Test
+        run: swift test
+
+      - name: Build app and DMG
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: ./scripts/package_dmg.sh
+
+      - name: Prepare release assets
+        shell: bash
+        run: |
+          version="${{ steps.release.outputs.version }}"
+          assets_dir="dist/release-assets"
+
+          mkdir -p "$assets_dir"
+          cp "dist/EasyTODO-macOS.dmg" "$assets_dir/EasyTODO-${version}-macOS-arm64.dmg"
+          cp "dist/EasyTODO-macOS.zip" "$assets_dir/EasyTODO-${version}-macOS-arm64.zip"
+
+          (
+            cd "$assets_dir"
+            shasum -a 256 "EasyTODO-${version}-macOS-arm64.dmg" "EasyTODO-${version}-macOS-arm64.zip" > SHA256SUMS.txt
+          )
+
+          cat > "$assets_dir/RELEASE_NOTES.md" <<NOTES
+          ## EasyTODO ${{ steps.release.outputs.tag }}
+
+          - Download the DMG, open it, then drag EasyTODO.app to Applications.
+          - Requires macOS 14 or later.
+          - This build is ad-hoc signed. If macOS blocks the first launch, right-click EasyTODO.app and choose Open.
+          NOTES
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.release.outputs.tag }}" \
+            "dist/release-assets/EasyTODO-${{ steps.release.outputs.version }}-macOS-arm64.dmg" \
+            "dist/release-assets/EasyTODO-${{ steps.release.outputs.version }}-macOS-arm64.zip" \
+            "dist/release-assets/SHA256SUMS.txt" \
+            --target "$GITHUB_SHA" \
+            --title "EasyTODO ${{ steps.release.outputs.tag }}" \
+            --notes-file "dist/release-assets/RELEASE_NOTES.md"

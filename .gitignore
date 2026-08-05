@@ -2,5 +2,6 @@
 .home/
 .swiftpm/
 DerivedData/
+dist/
 *.xcuserstate
 .DS_Store
