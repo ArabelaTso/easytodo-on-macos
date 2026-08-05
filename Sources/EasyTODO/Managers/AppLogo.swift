@@ -13,6 +13,10 @@ enum AppLogo {
         roundedImage(size: 512, cornerRadius: 112)
     }
 
+    static var quickAddImage: NSImage? {
+        roundedImage(size: 28, cornerRadius: 7)
+    }
+
     @MainActor
     static func applyApplicationIcon() {
         guard let image = applicationImage else { return }

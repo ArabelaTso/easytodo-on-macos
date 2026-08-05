@@ -63,6 +63,11 @@ final class WindowManager: ObservableObject {
 
     func showMainWindow() {
         if let window = mainWindow {
+            if window.isMiniaturized {
+                window.deminiaturize(nil)
+            }
+
+            window.orderFrontRegardless()
             window.makeKeyAndOrderFront(nil)
         }
 
@@ -70,7 +75,7 @@ final class WindowManager: ObservableObject {
     }
 
     func closeMainWindow() {
-        mainWindow?.close()
+        mainWindow?.orderOut(nil)
     }
 
     func minimizeMainWindow() {

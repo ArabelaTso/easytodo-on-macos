@@ -19,6 +19,10 @@ struct SettingsView: View {
                 Toggle("Hide Dock Icon", isOn: $hiddenDockIcon)
                     .disabled(!showMenuBar)
 
+                Text("Quick Add: \(GlobalShortcutManager.quickAddShortcutDescription)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
                 if let loginItemMessage {
                     Text(loginItemMessage)
                         .font(.caption)

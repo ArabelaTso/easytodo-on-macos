@@ -15,6 +15,7 @@ struct EasyTODOApp: App {
 
         do {
             modelContainer = try PersistenceController.modelContainer()
+            QuickAddPanelManager.shared.configure(modelContainer: modelContainer)
         } catch {
             fatalError("Unable to create SwiftData container: \(error)")
         }
