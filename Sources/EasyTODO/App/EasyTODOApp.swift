@@ -36,6 +36,13 @@ struct EasyTODOApp: App {
         }
         .windowStyle(.hiddenTitleBar)
         .commands {
+            CommandGroup(after: .undoRedo) {
+                Button("Undo Delete") {
+                    NotificationCenter.default.post(name: .easyTODOUndoDeleteTask, object: nil)
+                }
+                .keyboardShortcut("z", modifiers: [.control])
+            }
+
             CommandGroup(replacing: .newItem) {
                 Button("New Task") {
                     NotificationCenter.default.post(name: .easyTODOFocusNewTask, object: nil)

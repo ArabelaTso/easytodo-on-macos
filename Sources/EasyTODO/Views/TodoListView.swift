@@ -18,6 +18,8 @@ struct TodoListView: View {
     @State private var newTaskTitle = ""
     @State private var selectedDate = Date()
     @State private var isCalendarPresented = false
+    @State private var deletedTaskToRestore: DeletedTaskSnapshot?
+    @State private var undoKeyMonitor: Any?
     @State private var fireworksTrigger = 0
     @FocusState private var isAddingTaskFocused: Bool
 
@@ -133,6 +135,33 @@ struct TodoListView: View {
             } label: {
                 Label("Zoom Window", systemImage: "arrow.up.left.and.arrow.down.right")
             }
+
+            Divider()
+
+            Button {
+                alwaysOnTop.toggle()
+                WindowManager.shared.applyWindowSettings()
+            } label: {
+                Label("Always on Top", systemImage: alwaysOnTop ? "checkmark.circle.fill" : "circle")
+            }
+
+            Menu {
+                transparencyMenuButton(title: "100%", value: 1.0)
+                transparencyMenuButton(title: "90%", value: 0.90)
+                transparencyMenuButton(title: "80%", value: 0.80)
+            } label: {
+                Label("Transparency: \(transparencyTitle)", systemImage: "slider.horizontal.3")
+            }
+
+            if deletedTaskToRestore != nil {
+                Divider()
+
+                Button {
+                    undoLastDeletedTask()
+                } label: {
+                    Label("Undo Delete", systemImage: "arrow.uturn.backward")
+                }
+            }
         }
         .background(
             WindowAccessor { window in
@@ -156,12 +185,19 @@ struct TodoListView: View {
         }
         .onAppear {
             normalizeLegacyTaskDates()
+            installUndoDeleteKeyboardMonitor()
             WindowManager.shared.applyWindowSettings()
             WindowManager.shared.applyActivationPolicy()
+        }
+        .onDisappear {
+            removeUndoDeleteKeyboardMonitor()
         }
         .onReceive(NotificationCenter.default.publisher(for: .easyTODOFocusNewTask)) { _ in
             WindowManager.shared.showMainWindow()
             isAddingTaskFocused = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .easyTODOUndoDeleteTask)) { _ in
+            undoLastDeletedTask()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.willResignActiveNotification)) { _ in
             saveChanges()
@@ -248,6 +284,23 @@ struct TodoListView: View {
         .padding(.bottom, 12)
     }
 
+    private var transparencyTitle: String {
+        "\(Int((transparency * 100).rounded()))%"
+    }
+
+    private func transparencyMenuButton(title: String, value: Double) -> some View {
+        Button {
+            transparency = value
+            WindowManager.shared.applyWindowSettings()
+        } label: {
+            Label(title, systemImage: isSelectedTransparency(value) ? "checkmark.circle.fill" : "circle")
+        }
+    }
+
+    private func isSelectedTransparency(_ value: Double) -> Bool {
+        abs(transparency - value) < 0.001
+    }
+
     private var completedSeparator: some View {
         Rectangle()
             .fill(.secondary.opacity(0.24))
@@ -267,8 +320,47 @@ struct TodoListView: View {
     }
 
     private func delete(_ task: TodoTask) {
+        deletedTaskToRestore = DeletedTaskSnapshot(task: task, calendar: calendar)
         modelContext.delete(task)
         saveChanges()
+    }
+
+    private func undoLastDeletedTask() {
+        guard let deletedTaskToRestore else { return }
+
+        let restoredTask = deletedTaskToRestore.task()
+        modelContext.insert(restoredTask)
+        selectedDate = deletedTaskToRestore.scheduledDate
+        self.deletedTaskToRestore = nil
+        saveChanges()
+    }
+
+    private func installUndoDeleteKeyboardMonitor() {
+        guard undoKeyMonitor == nil else { return }
+
+        undoKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            guard isUndoDeleteShortcut(event), deletedTaskToRestore != nil else {
+                return event
+            }
+
+            undoLastDeletedTask()
+            return nil
+        }
+    }
+
+    private func removeUndoDeleteKeyboardMonitor() {
+        guard let undoKeyMonitor else { return }
+
+        NSEvent.removeMonitor(undoKeyMonitor)
+        self.undoKeyMonitor = nil
+    }
+
+    private func isUndoDeleteShortcut(_ event: NSEvent) -> Bool {
+        guard event.charactersIgnoringModifiers?.lowercased() == "z" else {
+            return false
+        }
+
+        return event.modifierFlags.intersection(.deviceIndependentFlagsMask).contains(.control)
     }
 
     private func moveTasks(from source: IndexSet, to destination: Int) {
@@ -348,5 +440,34 @@ struct TodoListView: View {
         } catch {
             assertionFailure("Unable to save tasks: \(error)")
         }
+    }
+}
+
+private struct DeletedTaskSnapshot {
+    let title: String
+    let isCompleted: Bool
+    let sortOrder: Int
+    let createdAt: Date
+    let scheduledDate: Date
+    let priority: TaskPriority
+
+    init(task: TodoTask, calendar: Calendar) {
+        title = task.title
+        isCompleted = task.isCompleted
+        sortOrder = task.sortOrder
+        createdAt = task.createdAt
+        scheduledDate = task.scheduledDay(in: calendar)
+        priority = task.priority
+    }
+
+    func task() -> TodoTask {
+        TodoTask(
+            title: title,
+            isCompleted: isCompleted,
+            sortOrder: sortOrder,
+            createdAt: createdAt,
+            scheduledDate: scheduledDate,
+            priority: priority
+        )
     }
 }

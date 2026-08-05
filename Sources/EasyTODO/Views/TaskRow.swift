@@ -7,6 +7,9 @@ struct TaskRow: View {
     var onCompletionChanged: (_ task: TodoTask, _ oldValue: Bool, _ newValue: Bool) -> Void
     var onDelete: () -> Void
 
+    @State private var isHoveringDelete = false
+    @State private var isConfirmingDelete = false
+
     var body: some View {
         HStack(spacing: 10) {
             RoundedRectangle(cornerRadius: 2, style: .continuous)
@@ -36,20 +39,43 @@ struct TaskRow: View {
             PriorityPicker(priority: priorityBinding)
                 .opacity(task.isCompleted ? 0.6 : 1)
 
-            Button(role: .destructive) {
-                onDelete()
+            Button {
+                isConfirmingDelete = true
             } label: {
-                Image(systemName: "trash")
-                    .font(.system(size: 12, weight: .medium))
-                    .frame(width: 24, height: 24)
+                AnimatedTrashIcon(isOpen: isHoveringDelete)
+                    .frame(width: 28, height: 28)
+                    .background {
+                        Circle()
+                            .fill(isHoveringDelete ? Color.red.opacity(0.12) : Color.clear)
+                    }
+                    .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
-            .foregroundStyle(.secondary)
-            .opacity(0.75)
+            .buttonStyle(.borderless)
+            .foregroundStyle(isHoveringDelete ? Color.red : Color.secondary)
+            .opacity(isHoveringDelete ? 1 : 0.75)
+            .help("Delete task")
             .accessibilityLabel("Delete task")
+            .onHover { isHovering in
+                isHoveringDelete = isHovering
+            }
+            .confirmationDialog(
+                "Delete this task?",
+                isPresented: $isConfirmingDelete,
+                titleVisibility: .visible
+            ) {
+                Button("Delete", role: .destructive, action: onDelete)
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text(confirmDeleteMessage)
+            }
         }
         .padding(.vertical, 7)
         .contentShape(Rectangle())
+    }
+
+    private var confirmDeleteMessage: String {
+        let title = task.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        return title.isEmpty ? "This task will be removed." : "\"\(title)\" will be removed."
     }
 
     private var priorityBinding: Binding<TaskPriority> {
@@ -59,5 +85,43 @@ struct TaskRow: View {
             task.priority = newPriority
             onUpdate()
         }
+    }
+}
+
+private struct AnimatedTrashIcon: View {
+    let isOpen: Bool
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 2, style: .continuous)
+                .stroke(lineWidth: 1.5)
+                .frame(width: 12, height: 12)
+                .offset(y: 4)
+
+            Path { path in
+                path.move(to: CGPoint(x: 9, y: 13))
+                path.addLine(to: CGPoint(x: 9, y: 20))
+                path.move(to: CGPoint(x: 14, y: 13))
+                path.addLine(to: CGPoint(x: 14, y: 20))
+                path.move(to: CGPoint(x: 19, y: 13))
+                path.addLine(to: CGPoint(x: 19, y: 20))
+            }
+            .stroke(style: StrokeStyle(lineWidth: 1.2, lineCap: .round))
+
+            RoundedRectangle(cornerRadius: 1, style: .continuous)
+                .fill(.foreground)
+                .frame(width: 14, height: 1.6)
+                .rotationEffect(.degrees(isOpen ? -28 : 0), anchor: .leading)
+                .offset(x: isOpen ? -1 : 0, y: isOpen ? -5 : -4)
+
+            RoundedRectangle(cornerRadius: 1, style: .continuous)
+                .fill(.foreground)
+                .frame(width: 6, height: 1.5)
+                .offset(y: isOpen ? -8 : -7)
+                .opacity(isOpen ? 0.9 : 1)
+        }
+        .frame(width: 28, height: 28)
+        .scaleEffect(isOpen ? 1.08 : 1)
+        .animation(.spring(response: 0.22, dampingFraction: 0.62), value: isOpen)
     }
 }
