@@ -9,12 +9,20 @@ struct MenuBarTodoView: View {
         SortDescriptor(\TodoTask.createdAt)
     ]) private var tasks: [TodoTask]
 
+    private let calendar = Calendar.current
+
+    private var todayTasks: [TodoTask] {
+        tasks.filter { task in
+            task.isScheduled(on: .now, calendar: calendar)
+        }
+    }
+
     private var completedCount: Int {
-        tasks.filter(\.isCompleted).count
+        todayTasks.filter(\.isCompleted).count
     }
 
     private var orderedTasks: [TodoTask] {
-        TaskListOrdering.ordered(tasks)
+        TaskListOrdering.ordered(todayTasks)
     }
 
     var body: some View {
@@ -25,14 +33,14 @@ struct MenuBarTodoView: View {
 
                 Spacer()
 
-                Text("\(completedCount) / \(tasks.count)")
+                Text("\(completedCount) / \(todayTasks.count)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
             Divider()
 
-            if tasks.isEmpty {
+            if todayTasks.isEmpty {
                 Text("No tasks yet")
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -43,9 +51,9 @@ struct MenuBarTodoView: View {
                         task.isCompleted.toggle()
 
                         if !wasCompleted && task.isCompleted {
-                            TaskListOrdering.moveCompletedTaskToFront(task, in: tasks)
+                            TaskListOrdering.moveCompletedTaskToFront(task, in: todayTasks)
                         } else if wasCompleted && !task.isCompleted {
-                            TaskListOrdering.moveReactivatedTaskToEnd(task, in: tasks)
+                            TaskListOrdering.moveReactivatedTaskToEnd(task, in: todayTasks)
                         }
 
                         saveChanges()
@@ -81,7 +89,7 @@ struct MenuBarTodoView: View {
 
                 Button("New Task") {
                     WindowManager.shared.showMainWindow()
-                    NotificationCenter.default.post(name: .desktopTodoFocusNewTask, object: nil)
+                    NotificationCenter.default.post(name: .easyTODOFocusNewTask, object: nil)
                 }
 
                 Spacer()

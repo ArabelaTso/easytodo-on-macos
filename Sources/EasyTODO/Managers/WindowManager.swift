@@ -10,8 +10,8 @@ final class WindowManager: ObservableObject {
 
     func configureMainWindow(_ window: NSWindow) {
         mainWindow = window
-        window.identifier = NSUserInterfaceItemIdentifier("desktop-todo-main-window")
-        window.title = "Desktop Todo"
+        window.identifier = NSUserInterfaceItemIdentifier("easy-todo-main-window")
+        window.title = "EasyTODO"
         window.minSize = NSSize(width: 280, height: 320)
         window.setContentSize(NSSize(width: 340, height: 480))
         window.isOpaque = false
@@ -34,8 +34,8 @@ final class WindowManager: ObservableObject {
         guard let window = mainWindow else { return }
 
         let defaults = UserDefaults.standard
-        let alwaysOnTop = defaults.bool(forKey: DesktopTodoSettings.alwaysOnTop)
-        let transparency = defaults.double(forKey: DesktopTodoSettings.transparency)
+        let alwaysOnTop = defaults.bool(forKey: EasyTODOSettings.alwaysOnTop)
+        let transparency = defaults.double(forKey: EasyTODOSettings.transparency)
 
         window.level = alwaysOnTop ? .floating : .normal
         window.alphaValue = min(max(transparency, 0.80), 1.0)
@@ -43,8 +43,8 @@ final class WindowManager: ObservableObject {
 
     func applyActivationPolicy() {
         let defaults = UserDefaults.standard
-        let hideDockIcon = defaults.bool(forKey: DesktopTodoSettings.hiddenDockIcon)
-        let showMenuBar = defaults.bool(forKey: DesktopTodoSettings.showMenuBar)
+        let hideDockIcon = defaults.bool(forKey: EasyTODOSettings.hiddenDockIcon)
+        let showMenuBar = defaults.bool(forKey: EasyTODOSettings.showMenuBar)
 
         NSApp.setActivationPolicy(hideDockIcon && showMenuBar ? .accessory : .regular)
     }

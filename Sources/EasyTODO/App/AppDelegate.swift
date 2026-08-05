@@ -2,7 +2,7 @@ import AppKit
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
-        DesktopTodoSettings.registerDefaults()
+        EasyTODOSettings.registerDefaults()
         WindowManager.shared.applyActivationPolicy()
         NSApp.activate(ignoringOtherApps: true)
     }

@@ -1,12 +1,12 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @AppStorage(DesktopTodoSettings.launchAtLogin) private var launchAtLogin = false
-    @AppStorage(DesktopTodoSettings.alwaysOnTop) private var alwaysOnTop = true
-    @AppStorage(DesktopTodoSettings.showMenuBar) private var showMenuBar = true
-    @AppStorage(DesktopTodoSettings.hiddenDockIcon) private var hiddenDockIcon = false
-    @AppStorage(DesktopTodoSettings.transparency) private var transparency = 0.90
-    @AppStorage(DesktopTodoSettings.theme) private var theme = ThemeOption.system.rawValue
+    @AppStorage(EasyTODOSettings.launchAtLogin) private var launchAtLogin = false
+    @AppStorage(EasyTODOSettings.alwaysOnTop) private var alwaysOnTop = true
+    @AppStorage(EasyTODOSettings.showMenuBar) private var showMenuBar = true
+    @AppStorage(EasyTODOSettings.hiddenDockIcon) private var hiddenDockIcon = false
+    @AppStorage(EasyTODOSettings.transparency) private var transparency = 0.90
+    @AppStorage(EasyTODOSettings.theme) private var theme = ThemeOption.system.rawValue
 
     @State private var loginItemMessage: String?
 

@@ -10,10 +10,10 @@ struct TodoListView: View {
         SortDescriptor(\TodoTask.createdAt)
     ]) private var tasks: [TodoTask]
 
-    @AppStorage(DesktopTodoSettings.alwaysOnTop) private var alwaysOnTop = true
-    @AppStorage(DesktopTodoSettings.hiddenDockIcon) private var hiddenDockIcon = false
-    @AppStorage(DesktopTodoSettings.showMenuBar) private var showMenuBar = true
-    @AppStorage(DesktopTodoSettings.transparency) private var transparency = 0.90
+    @AppStorage(EasyTODOSettings.alwaysOnTop) private var alwaysOnTop = true
+    @AppStorage(EasyTODOSettings.hiddenDockIcon) private var hiddenDockIcon = false
+    @AppStorage(EasyTODOSettings.showMenuBar) private var showMenuBar = true
+    @AppStorage(EasyTODOSettings.transparency) private var transparency = 0.90
 
     @State private var newTaskTitle = ""
     @State private var fireworksTrigger = 0
@@ -88,7 +88,7 @@ struct TodoListView: View {
             WindowManager.shared.applyWindowSettings()
             WindowManager.shared.applyActivationPolicy()
         }
-        .onReceive(NotificationCenter.default.publisher(for: .desktopTodoFocusNewTask)) { _ in
+        .onReceive(NotificationCenter.default.publisher(for: .easyTODOFocusNewTask)) { _ in
             WindowManager.shared.showMainWindow()
             isAddingTaskFocused = true
         }

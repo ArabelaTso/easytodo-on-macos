@@ -3,20 +3,20 @@
 import PackageDescription
 
 let package = Package(
-    name: "DesktopTodo",
+    name: "EasyTODO",
     platforms: [
         .macOS(.v14)
     ],
     products: [
-        .executable(name: "DesktopTodo", targets: ["DesktopTodo"])
+        .executable(name: "EasyTODO", targets: ["EasyTODO"])
     ],
     targets: [
         .executableTarget(
-            name: "DesktopTodo"
+            name: "EasyTODO"
         ),
         .testTarget(
-            name: "DesktopTodoTests",
-            dependencies: ["DesktopTodo"]
+            name: "EasyTODOTests",
+            dependencies: ["EasyTODO"]
         )
     ]
 )

@@ -1,4 +1,4 @@
-# Desktop Todo
+# EasyTODO
 
 ## 1. Product Positioning
 
@@ -155,12 +155,12 @@ This repository is a Swift Package Manager macOS app.
 
 ```sh
 swift build
-swift run DesktopTodo
+swift run EasyTODO
 swift test
 ```
 
 - `swift build` compiles the native macOS app.
-- `swift run DesktopTodo` launches the desktop todo window.
+- `swift run EasyTODO` launches the desktop todo window.
 - `swift test` runs the XCTest suite.
 
 ## 6. Technical Approach
@@ -180,9 +180,9 @@ Use Apple official frameworks only. The project does not need third-party depend
 ## 7. Project Structure
 
 ```text
-Sources/DesktopTodo/
+Sources/EasyTODO/
 ├── App/
-│   └── DesktopTodoApp.swift
+│   └── EasyTODOApp.swift
 ├── Models/
 │   └── TodoTask.swift
 ├── Persistence/

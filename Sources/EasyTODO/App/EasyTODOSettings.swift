@@ -1,6 +1,6 @@
 import Foundation
 
-enum DesktopTodoSettings {
+enum EasyTODOSettings {
     static let launchAtLogin = "launchAtLogin"
     static let alwaysOnTop = "alwaysOnTop"
     static let showMenuBar = "showMenuBar"

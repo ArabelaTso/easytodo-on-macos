@@ -2,16 +2,16 @@ import SwiftData
 import SwiftUI
 
 @main
-struct DesktopTodoApp: App {
+struct EasyTODOApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     private let modelContainer: ModelContainer
 
-    @AppStorage(DesktopTodoSettings.showMenuBar) private var showMenuBar = true
-    @AppStorage(DesktopTodoSettings.theme) private var theme = ThemeOption.system.rawValue
+    @AppStorage(EasyTODOSettings.showMenuBar) private var showMenuBar = true
+    @AppStorage(EasyTODOSettings.theme) private var theme = ThemeOption.system.rawValue
 
     init() {
-        DesktopTodoSettings.registerDefaults()
+        EasyTODOSettings.registerDefaults()
 
         do {
             modelContainer = try PersistenceController.modelContainer()
@@ -28,7 +28,7 @@ struct DesktopTodoApp: App {
     }
 
     private var mainWindow: some Scene {
-        WindowGroup("Desktop Todo") {
+        WindowGroup("EasyTODO") {
             TodoListView()
                 .modelContainer(modelContainer)
                 .preferredColorScheme(preferredColorScheme)
@@ -37,7 +37,7 @@ struct DesktopTodoApp: App {
         .commands {
             CommandGroup(replacing: .newItem) {
                 Button("New Task") {
-                    NotificationCenter.default.post(name: .desktopTodoFocusNewTask, object: nil)
+                    NotificationCenter.default.post(name: .easyTODOFocusNewTask, object: nil)
                 }
                 .keyboardShortcut("n", modifiers: .command)
             }

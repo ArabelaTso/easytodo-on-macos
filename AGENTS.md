@@ -6,20 +6,20 @@ This repository contains a Swift Package Manager macOS desktop todo app. `README
 
 The app structure is:
 
-- `Sources/DesktopTodo/App/` for the SwiftUI app entry point.
-- `Sources/DesktopTodo/Models/` for SwiftData models such as `TodoTask.swift`.
-- `Sources/DesktopTodo/Persistence/` for model container setup.
-- `Sources/DesktopTodo/Views/` for screens and rows such as `TodoListView.swift`.
-- `Sources/DesktopTodo/Managers/` for AppKit integration such as window behavior.
-- `Sources/DesktopTodo/Components/` for reusable UI pieces.
-- `Tests/DesktopTodoTests/` for XCTest coverage.
+- `Sources/EasyTODO/App/` for the SwiftUI app entry point.
+- `Sources/EasyTODO/Models/` for SwiftData models such as `TodoTask.swift`.
+- `Sources/EasyTODO/Persistence/` for model container setup.
+- `Sources/EasyTODO/Views/` for screens and rows such as `TodoListView.swift`.
+- `Sources/EasyTODO/Managers/` for AppKit integration such as window behavior.
+- `Sources/EasyTODO/Components/` for reusable UI pieces.
+- `Tests/EasyTODOTests/` for XCTest coverage.
 
 ## Build, Test, and Development Commands
 
 Use SwiftPM commands from the repository root:
 
 - `swift build` builds the native macOS app.
-- `swift run DesktopTodo` launches the desktop app.
+- `swift run EasyTODO` launches the desktop app.
 - `swift test` runs the XCTest suite.
 
 Keep command examples updated when packaging changes, such as adding an Xcode project.
