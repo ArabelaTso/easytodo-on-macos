@@ -16,11 +16,12 @@ final class WindowManager: ObservableObject {
         window.setContentSize(NSSize(width: 340, height: 480))
         window.isOpaque = false
         window.backgroundColor = .clear
-        window.titlebarAppearsTransparent = true
+        window.titlebarAppearsTransparent = false
         window.titleVisibility = .hidden
         window.isMovableByWindowBackground = true
         window.styleMask.insert(.fullSizeContentView)
         window.styleMask.insert(.resizable)
+        window.styleMask.remove(.titled)
         window.collectionBehavior.insert(.canJoinAllSpaces)
         window.collectionBehavior.insert(.fullScreenAuxiliary)
         window.standardWindowButton(.closeButton)?.isHidden = true
