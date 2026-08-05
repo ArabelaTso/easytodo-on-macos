@@ -3,6 +3,7 @@ import SwiftUI
 struct AddTaskView: View {
     @Binding var title: String
     let focus: FocusState<Bool>.Binding
+    var placeholder = "Add Task"
     var onSubmit: () -> Void
 
     var body: some View {
@@ -12,7 +13,7 @@ struct AddTaskView: View {
                 .foregroundStyle(.secondary)
                 .frame(width: 24, height: 24)
 
-            TextField("Add Task", text: $title)
+            TextField(placeholder, text: $title)
                 .textFieldStyle(.plain)
                 .font(.system(size: 15, weight: .regular, design: .default))
                 .focused(focus)

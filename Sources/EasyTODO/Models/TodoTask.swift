@@ -7,6 +7,7 @@ final class TodoTask {
     var isCompleted: Bool
     var sortOrder: Int
     var createdAt: Date
+    var scheduledDate: Date?
     var priorityRawValue: String?
 
     init(
@@ -14,12 +15,14 @@ final class TodoTask {
         isCompleted: Bool = false,
         sortOrder: Int = 0,
         createdAt: Date = .now,
+        scheduledDate: Date = .now,
         priority: TaskPriority = .notUrgentImportant
     ) {
         self.title = title
         self.isCompleted = isCompleted
         self.sortOrder = sortOrder
         self.createdAt = createdAt
+        self.scheduledDate = Calendar.current.startOfDay(for: scheduledDate)
         self.priorityRawValue = priority.rawValue
     }
 
@@ -30,5 +33,13 @@ final class TodoTask {
         set {
             priorityRawValue = newValue.rawValue
         }
+    }
+
+    func scheduledDay(in calendar: Calendar = .current) -> Date {
+        calendar.startOfDay(for: scheduledDate ?? .now)
+    }
+
+    func isScheduled(on date: Date, calendar: Calendar = .current) -> Bool {
+        calendar.isDate(scheduledDay(in: calendar), inSameDayAs: date)
     }
 }

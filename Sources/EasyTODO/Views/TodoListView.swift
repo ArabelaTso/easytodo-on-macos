@@ -16,19 +16,35 @@ struct TodoListView: View {
     @AppStorage(EasyTODOSettings.transparency) private var transparency = 0.90
 
     @State private var newTaskTitle = ""
+    @State private var selectedDate = Date()
+    @State private var isCalendarPresented = false
     @State private var fireworksTrigger = 0
     @FocusState private var isAddingTaskFocused: Bool
 
+    private let calendar = Calendar.current
+
     private var completedCount: Int {
-        tasks.filter(\.isCompleted).count
+        displayedTasks.filter(\.isCompleted).count
     }
 
     private var orderedTasks: [TodoTask] {
-        TaskListOrdering.ordered(tasks)
+        displayedTasks
+    }
+
+    private var displayedTasks: [TodoTask] {
+        TaskListOrdering.ordered(tasksScheduled(on: selectedDate))
     }
 
     private var hasActiveAndCompletedTasks: Bool {
-        tasks.contains { !$0.isCompleted } && tasks.contains { $0.isCompleted }
+        displayedTasks.contains { !$0.isCompleted } && displayedTasks.contains { $0.isCompleted }
+    }
+
+    private var headerTitle: String {
+        if calendar.isDateInToday(selectedDate) {
+            return "Today"
+        }
+
+        return selectedDate.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
     }
 
     var body: some View {
@@ -42,6 +58,26 @@ struct TodoListView: View {
                     .padding(.horizontal, 14)
 
                 List {
+                    if displayedTasks.isEmpty {
+                        VStack(spacing: 8) {
+                            Image(systemName: "calendar.badge.plus")
+                                .font(.system(size: 24, weight: .medium))
+                                .foregroundStyle(.secondary)
+
+                            Text("No tasks for \(shortDate(for: selectedDate))")
+                                .font(.system(size: 14, weight: .semibold))
+
+                            Text("Use + Add Task to plan this day.")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 36)
+                        .listRowInsets(EdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 10))
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                    }
+
                     ForEach(orderedTasks) { task in
                         VStack(spacing: 0) {
                             if shouldShowCompletedSeparator(before: task) {
@@ -84,7 +120,23 @@ struct TodoListView: View {
                 WindowManager.shared.configureMainWindow(window)
             }
         )
+        .sheet(isPresented: $isCalendarPresented) {
+            CalendarPlannerView(
+                tasks: tasks,
+                selectedDate: $selectedDate,
+                onAddTask: { title, date in
+                    _ = addTask(title: title, for: date)
+                },
+                onUpdate: saveChanges,
+                onCompletionChanged: handleCompletionChange,
+                onDelete: delete,
+                onMoveTasks: { date, source, destination in
+                    moveTasks(on: date, from: source, to: destination)
+                }
+            )
+        }
         .onAppear {
+            normalizeLegacyTaskDates()
             WindowManager.shared.applyWindowSettings()
             WindowManager.shared.applyActivationPolicy()
         }
@@ -117,16 +169,28 @@ struct TodoListView: View {
         }
     }
 
+
     private var header: some View {
         HStack(alignment: .firstTextBaseline) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Today")
-                    .font(.system(size: 22, weight: .semibold, design: .default))
+            Button {
+                isCalendarPresented = true
+            } label: {
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        Text(headerTitle)
+                            .font(.system(size: 22, weight: .semibold, design: .default))
 
-                Text("\(completedCount) / \(tasks.count) complete")
-                    .font(.system(size: 12, weight: .medium, design: .default))
-                    .foregroundStyle(.secondary)
+                        Image(systemName: "calendar")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                    Text("\(completedCount) / \(displayedTasks.count) complete - Open calendar")
+                        .font(.system(size: 12, weight: .medium, design: .default))
+                        .foregroundStyle(.secondary)
+                }
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Open calendar")
 
             Spacer()
 
@@ -161,16 +225,7 @@ struct TodoListView: View {
     }
 
     private func addTask() {
-        let trimmedTitle = newTaskTitle.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedTitle.isEmpty else {
-            isAddingTaskFocused = true
-            return
-        }
-
-        let nextSortOrder = (tasks.map(\.sortOrder).max() ?? -1) + 1
-        modelContext.insert(TodoTask(title: trimmedTitle, sortOrder: nextSortOrder))
-        newTaskTitle = ""
-        saveChanges()
+        _ = addTask(title: newTaskTitle, for: selectedDate)
         isAddingTaskFocused = true
     }
 
@@ -180,15 +235,21 @@ struct TodoListView: View {
     }
 
     private func moveTasks(from source: IndexSet, to destination: Int) {
-        TaskListOrdering.moveTasks(from: source, to: destination, in: tasks)
+        moveTasks(on: selectedDate, from: source, to: destination)
+    }
+
+    private func moveTasks(on date: Date, from source: IndexSet, to destination: Int) {
+        TaskListOrdering.moveTasks(from: source, to: destination, in: tasksScheduled(on: date))
         saveChanges()
     }
 
     private func handleCompletionChange(task: TodoTask, oldValue: Bool, newValue: Bool) {
+        let taskDate = task.scheduledDay(in: calendar)
+
         if !oldValue && newValue {
-            TaskListOrdering.moveCompletedTaskToFront(task, in: tasks)
+            TaskListOrdering.moveCompletedTaskToFront(task, in: tasksScheduled(on: taskDate))
         } else if oldValue && !newValue {
-            TaskListOrdering.moveReactivatedTaskToEnd(task, in: tasks)
+            TaskListOrdering.moveReactivatedTaskToEnd(task, in: tasksScheduled(on: taskDate))
         }
 
         saveChanges()
@@ -197,6 +258,51 @@ struct TodoListView: View {
 
         CompletionFeedbackPlayer.playTaskCompletedSound()
         fireworksTrigger += 1
+    }
+
+    private func addTask(title: String, for date: Date) -> TodoTask? {
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedTitle.isEmpty else {
+            return nil
+        }
+
+        let dayTasks = tasksScheduled(on: date)
+        let nextSortOrder = (dayTasks.map(\.sortOrder).max() ?? -1) + 1
+        let task = TodoTask(title: trimmedTitle, sortOrder: nextSortOrder, scheduledDate: date)
+
+        modelContext.insert(task)
+        newTaskTitle = ""
+        saveChanges()
+
+        return task
+    }
+
+    private func tasksScheduled(on date: Date) -> [TodoTask] {
+        tasks.filter { task in
+            task.isScheduled(on: date, calendar: calendar)
+        }
+    }
+
+    private func normalizeLegacyTaskDates() {
+        let today = calendar.startOfDay(for: .now)
+        var didChange = false
+
+        for task in tasks where task.scheduledDate == nil {
+            task.scheduledDate = today
+            didChange = true
+        }
+
+        if didChange {
+            saveChanges()
+        }
+    }
+
+    private func shortDate(for date: Date) -> String {
+        if calendar.isDateInToday(date) {
+            return "Today"
+        }
+
+        return date.formatted(.dateTime.month(.abbreviated).day())
     }
 
     private func saveChanges() {
