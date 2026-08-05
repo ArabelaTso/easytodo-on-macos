@@ -112,17 +112,21 @@ struct TodoListView: View {
                 AddTaskView(
                     title: $newTaskTitle,
                     focus: $isAddingTaskFocused,
+                    onActivate: dismissHeaderQuickAdd,
                     onSubmit: addTask
                 )
             }
 
+            CompletionFireworksView(trigger: fireworksTrigger)
+        }
+        .overlay(alignment: .topTrailing) {
             if isHeaderQuickAddPresented {
                 headerQuickAddPanel
+                    .padding(.top, 58)
+                    .padding(.trailing, 14)
                     .transition(.scale(scale: 0.94, anchor: .topTrailing).combined(with: .opacity))
                     .zIndex(2)
             }
-
-            CompletionFireworksView(trigger: fireworksTrigger)
         }
         .frame(minWidth: 280, idealWidth: 340, minHeight: 320, idealHeight: 480)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -327,9 +331,6 @@ struct TodoListView: View {
                 .strokeBorder(.white.opacity(0.18), lineWidth: 1)
         }
         .shadow(color: .black.opacity(0.16), radius: 18, x: 0, y: 10)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-        .padding(.top, 58)
-        .padding(.trailing, 14)
         .onAppear {
             DispatchQueue.main.async {
                 isHeaderQuickAddFocused = true
