@@ -122,7 +122,6 @@ Keep settings minimal.
 
 ### 3.3 Theme
 
-- System
 - Light
 - Dark
 

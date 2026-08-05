@@ -6,7 +6,7 @@ struct SettingsView: View {
     @AppStorage(EasyTODOSettings.showMenuBar) private var showMenuBar = true
     @AppStorage(EasyTODOSettings.hiddenDockIcon) private var hiddenDockIcon = false
     @AppStorage(EasyTODOSettings.transparency) private var transparency = 0.90
-    @AppStorage(EasyTODOSettings.theme) private var theme = ThemeOption.system.rawValue
+    @AppStorage(EasyTODOSettings.theme) private var theme = ThemeOption.light.rawValue
 
     @State private var loginItemMessage: String?
 

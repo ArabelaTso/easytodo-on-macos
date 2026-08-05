@@ -8,7 +8,7 @@ struct EasyTODOApp: App {
     private let modelContainer: ModelContainer
 
     @AppStorage(EasyTODOSettings.showMenuBar) private var showMenuBar = true
-    @AppStorage(EasyTODOSettings.theme) private var theme = ThemeOption.system.rawValue
+    @AppStorage(EasyTODOSettings.theme) private var theme = ThemeOption.light.rawValue
 
     init() {
         EasyTODOSettings.registerDefaults()
@@ -65,9 +65,7 @@ struct EasyTODOApp: App {
     }
 
     private var preferredColorScheme: ColorScheme? {
-        switch ThemeOption(rawValue: theme) ?? .system {
-        case .system:
-            nil
+        switch ThemeOption(rawValue: theme) ?? .light {
         case .light:
             .light
         case .dark:
