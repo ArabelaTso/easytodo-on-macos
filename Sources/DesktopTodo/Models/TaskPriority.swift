@@ -22,7 +22,7 @@ enum TaskPriority: String, CaseIterable, Identifiable {
     }
 
     static func normalized(from rawValue: String?) -> TaskPriority {
-        guard let rawValue else { return .importantUrgent }
+        guard let rawValue else { return .notUrgentImportant }
 
         if let priority = TaskPriority(rawValue: rawValue) {
             return priority
@@ -38,7 +38,7 @@ enum TaskPriority: String, CaseIterable, Identifiable {
         case "low":
             return .notUrgentNotImportant
         default:
-            return .importantUrgent
+            return .notUrgentImportant
         }
     }
 }

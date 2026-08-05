@@ -1,8 +1,10 @@
+import AppKit
 import SwiftData
 import SwiftUI
 
 struct TodoListView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
     @Query(sort: [
         SortDescriptor(\TodoTask.sortOrder),
         SortDescriptor(\TodoTask.createdAt)
@@ -69,6 +71,12 @@ struct TodoListView: View {
             WindowManager.shared.showMainWindow()
             isAddingTaskFocused = true
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.willResignActiveNotification)) { _ in
+            saveChanges()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
+            saveChanges()
+        }
         .onChange(of: alwaysOnTop) { _, _ in
             WindowManager.shared.applyWindowSettings()
         }
@@ -80,6 +88,11 @@ struct TodoListView: View {
         }
         .onChange(of: showMenuBar) { _, _ in
             WindowManager.shared.applyActivationPolicy()
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase != .active {
+                saveChanges()
+            }
         }
     }
 
@@ -105,9 +118,11 @@ struct TodoListView: View {
             }
             .buttonStyle(.borderless)
             .accessibilityLabel("Add task")
+
+            NoteWindowControls()
         }
         .padding(.horizontal, 16)
-        .padding(.top, 18)
+        .padding(.top, 16)
         .padding(.bottom, 12)
     }
 

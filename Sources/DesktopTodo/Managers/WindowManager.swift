@@ -17,9 +17,15 @@ final class WindowManager: ObservableObject {
         window.isOpaque = false
         window.backgroundColor = .clear
         window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
         window.isMovableByWindowBackground = true
+        window.styleMask.insert(.fullSizeContentView)
+        window.styleMask.insert(.resizable)
         window.collectionBehavior.insert(.canJoinAllSpaces)
         window.collectionBehavior.insert(.fullScreenAuxiliary)
+        window.standardWindowButton(.closeButton)?.isHidden = true
+        window.standardWindowButton(.miniaturizeButton)?.isHidden = true
+        window.standardWindowButton(.zoomButton)?.isHidden = true
 
         applyWindowSettings()
     }
@@ -49,5 +55,17 @@ final class WindowManager: ObservableObject {
         }
 
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    func closeMainWindow() {
+        mainWindow?.close()
+    }
+
+    func minimizeMainWindow() {
+        mainWindow?.miniaturize(nil)
+    }
+
+    func zoomMainWindow() {
+        mainWindow?.performZoom(nil)
     }
 }

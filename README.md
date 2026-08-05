@@ -39,7 +39,7 @@ Priority levels:
 
 - Four solid color dots: red, yellow, green, gray
 - The UI shows color only, with no written priority names
-- New tasks default to red
+- New tasks default to green
 
 ### 2.2 Quick Add
 
@@ -51,7 +51,7 @@ Users can add a task by:
 
 ### 2.3 Auto Save
 
-There is no manual save action. Task and setting changes are saved automatically with SwiftData as the user types or edits.
+There is no manual save action. Task and setting changes are saved automatically with SwiftData as the user types or edits. The local store is kept under the user's Application Support directory so tasks reload after the app is reopened.
 
 ### 2.4 Drag Sorting
 

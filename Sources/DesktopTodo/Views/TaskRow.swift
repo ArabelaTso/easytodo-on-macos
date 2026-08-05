@@ -28,6 +28,9 @@ struct TaskRow: View {
                 .font(.system(size: 15, weight: .regular, design: .default))
                 .strikethrough(task.isCompleted, color: .secondary)
                 .foregroundStyle(task.isCompleted ? .secondary : .primary)
+                .onChange(of: task.title) { _, _ in
+                    onUpdate()
+                }
 
             PriorityPicker(priority: priorityBinding)
                 .opacity(task.isCompleted ? 0.6 : 1)
