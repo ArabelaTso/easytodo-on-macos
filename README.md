@@ -93,6 +93,22 @@ Download the latest macOS DMG from GitHub Releases:
 
 Requires macOS 14 or later.
 
+## Run From Source
+
+From the repository root, build and launch the app with Swift Package Manager:
+
+```sh
+swift run EasyTODO
+```
+
+If an older debug app is already running, stop it first, then start again:
+
+```sh
+ps -Ao pid,etime,command | rg 'EasyTODO|\.build/.*/EasyTODO'
+kill <pid>
+swift run EasyTODO
+```
+
 ## Usage
 
 1. Launch EasyTODO from `Applications`.
@@ -158,6 +174,7 @@ Reverse chronological history, based on Git commits.
 
 | Commit | Tag | Notes |
 | --- | --- | --- |
+| `v1.0.1` | ![release](https://img.shields.io/badge/-release-8250df?style=flat-square) | Added menu bar quick add, delete confirmation, scrollable menu bar tasks, source launch docs, and transparent Quick Add corners. |
 | `v1.0.0` | ![release](https://img.shields.io/badge/-release-8250df?style=flat-square) | Prepared the 1.0.0 release with refreshed quick add, widget scrolling, daily rollover, and title editing fixes. |
 | `67d0e54` | ![release](https://img.shields.io/badge/-release-8250df?style=flat-square) | Added macOS app packaging, DMG generation, and GitHub release automation. |
 | `1f5150d` | ![feature](https://img.shields.io/badge/-feature-2da44e?style=flat-square) | Added compact desktop widget mode. |

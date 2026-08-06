@@ -50,7 +50,7 @@ final class QuickAddPanelManager {
         panel.hidesOnDeactivate = false
         panel.animationBehavior = .utilityWindow
 
-        let hostingController = NSHostingController(
+        let hostingView = TransparentQuickAddHostingView(
             rootView: QuickAddPanelView(
                 onSubmit: { [weak self] title in
                     self?.addTask(title: title)
@@ -61,9 +61,10 @@ final class QuickAddPanelManager {
                 }
             )
         )
-        hostingController.view.wantsLayer = true
-        hostingController.view.layer?.backgroundColor = NSColor.clear.cgColor
-        panel.contentView = hostingController.view
+        hostingView.frame = NSRect(origin: .zero, size: size)
+        hostingView.autoresizingMask = [.width, .height]
+        hostingView.configureTransparentLayer()
+        panel.contentView = hostingView
 
         self.panel = panel
         showPanelOnCurrentSpace(panel)
@@ -151,4 +152,23 @@ final class QuickAddPanelManager {
 private final class QuickAddPanel: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }
+}
+
+private final class TransparentQuickAddHostingView<Content: View>: NSHostingView<Content> {
+    override var isOpaque: Bool { false }
+
+    func configureTransparentLayer() {
+        wantsLayer = true
+        // Clip the backing layer too so the clear panel never shows square hosting corners.
+        layer?.cornerRadius = QuickAddPanelView.cornerRadius
+        layer?.cornerCurve = .continuous
+        layer?.masksToBounds = true
+        layer?.isOpaque = false
+        layer?.backgroundColor = NSColor.clear.cgColor
+    }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        configureTransparentLayer()
+    }
 }

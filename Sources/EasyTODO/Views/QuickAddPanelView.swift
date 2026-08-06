@@ -2,6 +2,8 @@ import AppKit
 import SwiftUI
 
 struct QuickAddPanelView: View {
+    static let cornerRadius: CGFloat = 22
+
     var onSubmit: (String) -> Void
     var onCancel: () -> Void
 
@@ -43,14 +45,14 @@ struct QuickAddPanelView: View {
         }
         .padding(.horizontal, 18)
         .frame(width: 520, height: 76)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous))
         .background(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
+            RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous)
                 .fill(Color(nsColor: .windowBackgroundColor).opacity(0.62))
         )
-        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
+            RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous)
                 .strokeBorder(.white.opacity(0.22), lineWidth: 1)
         }
         .shadow(color: .black.opacity(0.22), radius: 28, x: 0, y: 18)

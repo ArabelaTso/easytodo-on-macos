@@ -9,6 +9,9 @@ struct MenuBarTodoView: View {
         SortDescriptor(\TodoTask.createdAt)
     ]) private var tasks: [TodoTask]
 
+    @State private var isQuickAddPresented = false
+    @State private var taskPendingDeletion: TodoTask?
+
     private let calendar = Calendar.current
     private let dayRefreshTimer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
 
@@ -37,6 +40,21 @@ struct MenuBarTodoView: View {
                 Text("\(completedCount) / \(todayTasks.count)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+
+                Button(action: showQuickAdd) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 12, weight: .semibold))
+                        .frame(width: 24, height: 24)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Add task")
+                .popover(isPresented: $isQuickAddPresented, arrowEdge: .top) {
+                    HeaderQuickAddPopover(
+                        onSubmit: addTask,
+                        onCancel: dismissQuickAdd
+                    )
+                }
             }
 
             Divider()
@@ -46,39 +64,16 @@ struct MenuBarTodoView: View {
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
-                ForEach(orderedTasks.prefix(8)) { task in
-                    Button {
-                        let wasCompleted = task.isCompleted
-                        task.isCompleted.toggle()
-
-                        if !wasCompleted && task.isCompleted {
-                            TaskListOrdering.moveCompletedTaskToFront(task, in: todayTasks)
-                        } else if wasCompleted && !task.isCompleted {
-                            TaskListOrdering.moveReactivatedTaskToEnd(task, in: todayTasks)
-                        }
-
-                        saveChanges()
-
-                        if !wasCompleted && task.isCompleted {
-                            CompletionFeedbackPlayer.playTaskCompletedSound()
-                        }
-                    } label: {
-                        HStack {
-                            Circle()
-                                .fill(task.priority.color)
-                                .frame(width: 8, height: 8)
-
-                            Image(systemName: task.isCompleted ? "checkmark.circle.fill" : "circle")
-                                .foregroundStyle(task.isCompleted ? Color.accentColor : Color.secondary)
-
-                            Text(task.title.isEmpty ? "Untitled task" : task.title)
-                                .lineLimit(1)
-
-                            Spacer()
+                ScrollView(.vertical) {
+                    LazyVStack(alignment: .leading, spacing: 6) {
+                        ForEach(orderedTasks) { task in
+                            menuTaskRow(task)
                         }
                     }
-                    .buttonStyle(.plain)
+                    .padding(.trailing, 2)
                 }
+                .frame(height: taskListHeight)
+                .scrollIndicators(.automatic)
             }
 
             Divider()
@@ -114,6 +109,77 @@ struct MenuBarTodoView: View {
         .onReceive(dayRefreshTimer) { _ in
             runDailyTaskMaintenance()
         }
+        .confirmationDialog(
+            "Delete this task?",
+            isPresented: deleteConfirmationBinding,
+            titleVisibility: .visible
+        ) {
+            Button("Delete", role: .destructive, action: deletePendingTask)
+            Button("Cancel", role: .cancel) {
+                taskPendingDeletion = nil
+            }
+        } message: {
+            Text(confirmDeleteMessage)
+        }
+    }
+
+    private var taskListHeight: CGFloat {
+        min(CGFloat(orderedTasks.count) * 28, 220)
+    }
+
+    private var deleteConfirmationBinding: Binding<Bool> {
+        Binding {
+            taskPendingDeletion != nil
+        } set: { isPresented in
+            if !isPresented {
+                taskPendingDeletion = nil
+            }
+        }
+    }
+
+    private var confirmDeleteMessage: String {
+        guard let taskPendingDeletion else {
+            return "This task will be removed."
+        }
+
+        let title = taskPendingDeletion.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        return title.isEmpty ? "This task will be removed." : "\"\(title)\" will be removed."
+    }
+
+    private func menuTaskRow(_ task: TodoTask) -> some View {
+        HStack(spacing: 6) {
+            Button {
+                toggleCompletion(for: task)
+            } label: {
+                HStack {
+                    Circle()
+                        .fill(task.priority.color)
+                        .frame(width: 8, height: 8)
+
+                    Image(systemName: task.isCompleted ? "checkmark.circle.fill" : "circle")
+                        .foregroundStyle(task.isCompleted ? Color.accentColor : Color.secondary)
+
+                    Text(task.title.isEmpty ? "Untitled task" : task.title)
+                        .lineLimit(1)
+
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                requestDelete(task)
+            } label: {
+                Image(systemName: "trash")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 22, height: 22)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Delete task")
+        }
     }
 
     private func saveChanges() {
@@ -121,6 +187,56 @@ struct MenuBarTodoView: View {
             try modelContext.save()
         } catch {
             assertionFailure("Unable to save menu bar task change: \(error)")
+        }
+    }
+
+    private func toggleCompletion(for task: TodoTask) {
+        let wasCompleted = task.isCompleted
+        task.isCompleted.toggle()
+
+        if !wasCompleted && task.isCompleted {
+            TaskListOrdering.moveCompletedTaskToFront(task, in: todayTasks)
+        } else if wasCompleted && !task.isCompleted {
+            TaskListOrdering.moveReactivatedTaskToEnd(task, in: todayTasks)
+        }
+
+        saveChanges()
+
+        if !wasCompleted && task.isCompleted {
+            CompletionFeedbackPlayer.playTaskCompletedSound()
+        }
+    }
+
+    private func requestDelete(_ task: TodoTask) {
+        taskPendingDeletion = task
+    }
+
+    private func deletePendingTask() {
+        guard let taskPendingDeletion else { return }
+
+        delete(taskPendingDeletion)
+        self.taskPendingDeletion = nil
+    }
+
+    private func delete(_ task: TodoTask) {
+        modelContext.delete(task)
+        saveChanges()
+    }
+
+    private func showQuickAdd() {
+        isQuickAddPresented = true
+    }
+
+    private func dismissQuickAdd() {
+        isQuickAddPresented = false
+    }
+
+    private func addTask(title: String) -> Bool {
+        do {
+            return try TaskCreation.addTask(title: title, in: modelContext, calendar: calendar) != nil
+        } catch {
+            assertionFailure("Unable to save menu bar task: \(error)")
+            return false
         }
     }
 
