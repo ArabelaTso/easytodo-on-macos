@@ -9,6 +9,11 @@ final class WindowManager: ObservableObject {
     private init() {}
 
     func configureMainWindow(_ window: NSWindow) {
+        guard mainWindow !== window else {
+            applyWindowSettings()
+            return
+        }
+
         mainWindow = window
         window.identifier = NSUserInterfaceItemIdentifier("easy-todo-main-window")
         window.title = "EasyTODO"

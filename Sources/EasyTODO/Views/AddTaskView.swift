@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct AddTaskView: View {
@@ -24,10 +25,11 @@ struct AddTaskView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
         .contentShape(Rectangle())
-        .simultaneousGesture(TapGesture().onEnded(activate))
+        .onTapGesture(perform: activate)
     }
 
     private func activate() {
+        NSApp.activate(ignoringOtherApps: true)
         onActivate?()
 
         DispatchQueue.main.async {

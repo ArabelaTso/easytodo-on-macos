@@ -175,7 +175,9 @@ final class MenuBarManager: NSObject {
         guard let button = statusItem?.button, let modelContainer else { return }
 
         do {
-            let tasks = try modelContainer.mainContext.fetch(FetchDescriptor<TodoTask>())
+            let context = modelContainer.mainContext
+            _ = try TaskDayMaintenance.rolloverUnfinishedTasksToToday(in: context)
+            let tasks = try context.fetch(FetchDescriptor<TodoTask>())
             let todayTasks = tasks.filter { task in
                 task.isScheduled(on: .now)
             }

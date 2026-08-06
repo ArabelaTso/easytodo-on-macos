@@ -1,4 +1,4 @@
-import AppKit
+@preconcurrency import AppKit
 import SwiftData
 import SwiftUI
 
@@ -15,18 +15,15 @@ struct TodoListView: View {
     @AppStorage(EasyTODOSettings.showMenuBar) private var showMenuBar = true
     @AppStorage(EasyTODOSettings.transparency) private var transparency = 0.80
 
-    @State private var newTaskTitle = ""
-    @State private var headerTaskTitle = ""
     @State private var selectedDate = Date()
     @State private var isCalendarPresented = false
     @State private var isHeaderQuickAddPresented = false
     @State private var deletedTaskToRestore: DeletedTaskSnapshot?
     @State private var undoKeyMonitor: Any?
     @State private var fireworksTrigger = 0
-    @FocusState private var isAddingTaskFocused: Bool
-    @FocusState private var isHeaderQuickAddFocused: Bool
 
     private let calendar = Calendar.current
+    private let dayRefreshTimer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
 
     private var completedCount: Int {
         displayedTasks.filter(\.isCompleted).count
@@ -46,7 +43,7 @@ struct TodoListView: View {
 
     private var headerTitle: String {
         if calendar.isDateInToday(selectedDate) {
-            return "Today"
+            return "Today's TODOs"
         }
 
         return selectedDate.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
@@ -72,7 +69,7 @@ struct TodoListView: View {
                             Text("No tasks for \(shortDate(for: selectedDate))")
                                 .font(.system(size: 14, weight: .semibold))
 
-                            Text("Use + Add Task to plan this day.")
+                            Text("Use the + button to plan this day.")
                                 .font(.system(size: 12, weight: .medium))
                                 .foregroundStyle(.secondary)
                         }
@@ -106,27 +103,8 @@ struct TodoListView: View {
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
 
-                Divider()
-                    .padding(.horizontal, 14)
-
-                AddTaskView(
-                    title: $newTaskTitle,
-                    focus: $isAddingTaskFocused,
-                    onActivate: dismissHeaderQuickAdd,
-                    onSubmit: addTask
-                )
             }
-
             CompletionFireworksView(trigger: fireworksTrigger)
-        }
-        .overlay(alignment: .topTrailing) {
-            if isHeaderQuickAddPresented {
-                headerQuickAddPanel
-                    .padding(.top, 58)
-                    .padding(.trailing, 14)
-                    .transition(.scale(scale: 0.94, anchor: .topTrailing).combined(with: .opacity))
-                    .zIndex(2)
-            }
         }
         .frame(minWidth: 280, idealWidth: 340, minHeight: 320, idealHeight: 480)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -204,7 +182,7 @@ struct TodoListView: View {
             )
         }
         .onAppear {
-            normalizeLegacyTaskDates()
+            runDailyTaskMaintenance()
             installUndoDeleteKeyboardMonitor()
             WindowManager.shared.applyWindowSettings()
             WindowManager.shared.applyActivationPolicy()
@@ -214,7 +192,7 @@ struct TodoListView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .easyTODOFocusNewTask)) { _ in
             WindowManager.shared.showMainWindow()
-            isAddingTaskFocused = true
+            focusNewTaskInput()
         }
         .onReceive(NotificationCenter.default.publisher(for: .easyTODOUndoDeleteTask)) { _ in
             undoLastDeletedTask()
@@ -224,6 +202,9 @@ struct TodoListView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
             saveChanges()
+        }
+        .onReceive(dayRefreshTimer) { _ in
+            runDailyTaskMaintenance()
         }
         .onChange(of: alwaysOnTop) { _, _ in
             WindowManager.shared.applyWindowSettings()
@@ -238,7 +219,9 @@ struct TodoListView: View {
             WindowManager.shared.applyActivationPolicy()
         }
         .onChange(of: scenePhase) { _, newPhase in
-            if newPhase != .active {
+            if newPhase == .active {
+                runDailyTaskMaintenance()
+            } else {
                 saveChanges()
             }
         }
@@ -262,6 +245,8 @@ struct TodoListView: View {
             )
         }
         .ignoresSafeArea()
+        .contentShape(Rectangle())
+        .onTapGesture(count: 2, perform: switchToWidget)
     }
 
     private var header: some View {
@@ -272,7 +257,7 @@ struct TodoListView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 6) {
                         Text(headerTitle)
-                            .font(.system(size: 22, weight: .semibold, design: .default))
+                            .font(.system(size: 17, weight: .semibold, design: .default))
 
                         Image(systemName: "calendar")
                             .font(.system(size: 12, weight: .semibold))
@@ -289,91 +274,40 @@ struct TodoListView: View {
 
             Spacer()
 
-            Button {
-                showHeaderQuickAdd()
-            } label: {
+            Button(action: showHeaderQuickAdd) {
                 Image(systemName: "plus")
                     .font(.system(size: 14, weight: .semibold))
-                    .frame(width: 28, height: 28)
+                    .frame(width: 32, height: 32)
+                    .contentShape(Rectangle())
             }
-            .buttonStyle(.borderless)
+            .buttonStyle(.plain)
             .accessibilityLabel("Add task")
+            .popover(isPresented: $isHeaderQuickAddPresented, arrowEdge: .top) {
+                HeaderQuickAddPopover(
+                    onSubmit: { title in
+                        addTask(title: title, for: selectedDate) != nil
+                    },
+                    onCancel: dismissHeaderQuickAdd
+                )
+            }
         }
         .padding(.horizontal, 16)
         .padding(.top, 16)
         .padding(.bottom, 12)
     }
 
-    private var headerQuickAddPanel: some View {
-        HStack(spacing: 9) {
-            Image(systemName: "plus")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(.secondary)
-
-            TextField("Add task...", text: $headerTaskTitle)
-                .textFieldStyle(.plain)
-                .font(.system(size: 14, weight: .medium))
-                .focused($isHeaderQuickAddFocused)
-                .onSubmit(addHeaderTask)
-
-            Text("Return")
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 7)
-                .padding(.vertical, 3)
-                .background {
-                    Capsule()
-                        .fill(.primary.opacity(0.06))
-                }
-        }
-        .padding(.horizontal, 13)
-        .frame(width: 246, height: 44)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .background {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(nsColor: .windowBackgroundColor).opacity(0.58))
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(.white.opacity(0.18), lineWidth: 1)
-        }
-        .shadow(color: .black.opacity(0.16), radius: 18, x: 0, y: 10)
-        .onAppear {
-            DispatchQueue.main.async {
-                isHeaderQuickAddFocused = true
-            }
-        }
-        .onExitCommand {
-            dismissHeaderQuickAdd()
-        }
-    }
-
     private func showHeaderQuickAdd() {
-        withAnimation(.spring(response: 0.24, dampingFraction: 0.82)) {
-            isHeaderQuickAddPresented = true
-        }
-
-        DispatchQueue.main.async {
-            isHeaderQuickAddFocused = true
-        }
+        WindowManager.shared.showMainWindow()
+        isHeaderQuickAddPresented = true
     }
 
     private func dismissHeaderQuickAdd() {
-        headerTaskTitle = ""
-        isHeaderQuickAddFocused = false
-
-        withAnimation(.easeOut(duration: 0.14)) {
-            isHeaderQuickAddPresented = false
-        }
+        isHeaderQuickAddPresented = false
     }
 
-    private func addHeaderTask() {
-        guard addTask(title: headerTaskTitle, for: selectedDate) != nil else {
-            isHeaderQuickAddFocused = true
-            return
-        }
-
-        dismissHeaderQuickAdd()
+    private func switchToWidget() {
+        WidgetWindowManager.shared.showWidget()
+        WindowManager.shared.closeMainWindow()
     }
 
     private var transparencyTitle: String {
@@ -406,12 +340,12 @@ struct TodoListView: View {
         return orderedTasks.first(where: \.isCompleted) === task
     }
 
-    private func addTask() {
-        _ = addTask(title: newTaskTitle, for: selectedDate)
-        isAddingTaskFocused = true
+    private func focusNewTaskInput() {
+        showHeaderQuickAdd()
     }
 
     private func delete(_ task: TodoTask) {
+        dismissHeaderQuickAdd()
         deletedTaskToRestore = DeletedTaskSnapshot(task: task, calendar: calendar)
         modelContext.delete(task)
         saveChanges()
@@ -431,6 +365,11 @@ struct TodoListView: View {
         guard undoKeyMonitor == nil else { return }
 
         undoKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            if isHeaderQuickAddPresented, event.keyCode == 53 {
+                dismissHeaderQuickAdd()
+                return nil
+            }
+
             guard isUndoDeleteShortcut(event), deletedTaskToRestore != nil else {
                 return event
             }
@@ -482,20 +421,14 @@ struct TodoListView: View {
     }
 
     private func addTask(title: String, for date: Date) -> TodoTask? {
-        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedTitle.isEmpty else {
+        do {
+            let task = try TaskCreation.addTask(title: title, scheduledDate: date, in: modelContext, calendar: calendar)
+
+            return task
+        } catch {
+            assertionFailure("Unable to save task: \(error)")
             return nil
         }
-
-        let dayTasks = tasksScheduled(on: date)
-        let nextSortOrder = (dayTasks.map(\.sortOrder).max() ?? -1) + 1
-        let task = TodoTask(title: trimmedTitle, sortOrder: nextSortOrder, scheduledDate: date)
-
-        modelContext.insert(task)
-        newTaskTitle = ""
-        saveChanges()
-
-        return task
     }
 
     private func tasksScheduled(on date: Date) -> [TodoTask] {
@@ -504,13 +437,23 @@ struct TodoListView: View {
         }
     }
 
-    private func normalizeLegacyTaskDates() {
+    private func runDailyTaskMaintenance() {
         let today = calendar.startOfDay(for: .now)
         var didChange = false
 
         for task in tasks where task.scheduledDate == nil {
             task.scheduledDate = today
             didChange = true
+        }
+
+        didChange = TaskDayMaintenance.rolloverUnfinishedTasksToToday(
+            tasks,
+            today: today,
+            calendar: calendar
+        ) || didChange
+
+        if selectedDate < today {
+            selectedDate = today
         }
 
         if didChange {
@@ -531,6 +474,157 @@ struct TodoListView: View {
             try modelContext.save()
         } catch {
             assertionFailure("Unable to save tasks: \(error)")
+        }
+    }
+}
+
+private struct HeaderQuickAddPopover: View {
+    @State private var title = ""
+    @State private var focusRequest = 0
+
+    var onSubmit: (String) -> Bool
+    var onCancel: () -> Void
+
+    var body: some View {
+        HStack(spacing: 9) {
+            Image(systemName: "plus")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.secondary)
+
+            QuickAddTaskTextField(
+                text: $title,
+                focusRequest: focusRequest,
+                onSubmit: submitTitle,
+                onCancel: onCancel
+            )
+            .frame(maxWidth: .infinity, minHeight: 24)
+
+            HStack(spacing: 4) {
+                shortcutHint("Return")
+                shortcutHint("Esc")
+            }
+        }
+        .padding(.horizontal, 13)
+        .padding(.vertical, 10)
+        .frame(width: 286)
+        .onAppear(perform: focusInput)
+    }
+
+    private func submitTitle() {
+        guard onSubmit(title) else {
+            focusInput()
+            return
+        }
+
+        title = ""
+        focusInput()
+    }
+
+    private func focusInput() {
+        focusRequest += 1
+    }
+
+    private func shortcutHint(_ title: String) -> some View {
+        Text(title)
+            .font(.system(size: 10, weight: .semibold))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 7)
+            .padding(.vertical, 3)
+            .background {
+                Capsule()
+                    .fill(.primary.opacity(0.06))
+            }
+    }
+}
+
+private struct QuickAddTaskTextField: NSViewRepresentable {
+    @Binding var text: String
+    let focusRequest: Int
+    var onSubmit: () -> Void
+    var onCancel: () -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    func makeNSView(context: Context) -> NSTextField {
+        let textField = NSTextField()
+        textField.delegate = context.coordinator
+        textField.isBordered = false
+        textField.drawsBackground = false
+        textField.isEditable = true
+        textField.isEnabled = true
+        textField.isSelectable = true
+        textField.focusRingType = .none
+        textField.placeholderString = "Add task..."
+        textField.font = NSFont.systemFont(ofSize: 14, weight: .medium)
+        textField.usesSingleLineMode = true
+        textField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        return textField
+    }
+
+    func updateNSView(_ nsView: NSTextField, context: Context) {
+        context.coordinator.parent = self
+
+        if nsView.stringValue != text {
+            nsView.stringValue = text
+            nsView.currentEditor()?.string = text
+        }
+
+        guard context.coordinator.lastFocusRequest != focusRequest else { return }
+
+        context.coordinator.lastFocusRequest = focusRequest
+        context.coordinator.focus(nsView)
+    }
+
+    final class Coordinator: NSObject, NSTextFieldDelegate {
+        var parent: QuickAddTaskTextField
+        var lastFocusRequest = 0
+
+        init(_ parent: QuickAddTaskTextField) {
+            self.parent = parent
+        }
+
+        func controlTextDidChange(_ notification: Notification) {
+            guard let textField = notification.object as? NSTextField else { return }
+
+            parent.text = textField.stringValue
+        }
+
+        func control(
+            _ control: NSControl,
+            textView: NSTextView,
+            doCommandBy commandSelector: Selector
+        ) -> Bool {
+            if commandSelector == #selector(NSResponder.insertNewline(_:)) {
+                if let textField = control as? NSTextField {
+                    parent.text = textField.stringValue
+                }
+
+                let onSubmit = parent.onSubmit
+                DispatchQueue.main.async {
+                    onSubmit()
+                }
+                return true
+            }
+
+            if commandSelector == #selector(NSResponder.cancelOperation(_:)) {
+                parent.onCancel()
+                return true
+            }
+
+            return false
+        }
+
+        func focus(_ textField: NSTextField) {
+            DispatchQueue.main.async {
+                guard let window = textField.window else { return }
+
+                NSApp.activate(ignoringOtherApps: true)
+                window.makeKeyAndOrderFront(nil)
+                window.makeFirstResponder(textField)
+                textField.currentEditor()?.moveToEndOfDocument(nil)
+            }
         }
     }
 }

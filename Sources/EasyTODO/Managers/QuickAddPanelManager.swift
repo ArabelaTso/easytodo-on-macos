@@ -77,19 +77,10 @@ final class QuickAddPanelManager {
     }
 
     private func addTask(title: String) {
-        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedTitle.isEmpty, let modelContainer else { return }
+        guard let modelContainer else { return }
 
         do {
-            let context = modelContainer.mainContext
-            let tasks = try context.fetch(FetchDescriptor<TodoTask>())
-            let todayTasks = tasks.filter { task in
-                task.isScheduled(on: .now)
-            }
-            let nextSortOrder = (todayTasks.map(\.sortOrder).max() ?? -1) + 1
-
-            context.insert(TodoTask(title: trimmedTitle, sortOrder: nextSortOrder, scheduledDate: .now))
-            try context.save()
+            _ = try TaskCreation.addTask(title: title, in: modelContainer.mainContext)
         } catch {
             NSLog("EasyTODO failed to save quick add task: \(error)")
         }

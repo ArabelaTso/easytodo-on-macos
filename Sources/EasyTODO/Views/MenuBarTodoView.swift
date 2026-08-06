@@ -1,3 +1,4 @@
+import Foundation
 import SwiftData
 import SwiftUI
 
@@ -9,6 +10,7 @@ struct MenuBarTodoView: View {
     ]) private var tasks: [TodoTask]
 
     private let calendar = Calendar.current
+    private let dayRefreshTimer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
 
     private var todayTasks: [TodoTask] {
         tasks.filter { task in
@@ -108,6 +110,10 @@ struct MenuBarTodoView: View {
         .onTapGesture(count: 2) {
             WindowManager.shared.showMainWindow()
         }
+        .onAppear(perform: runDailyTaskMaintenance)
+        .onReceive(dayRefreshTimer) { _ in
+            runDailyTaskMaintenance()
+        }
     }
 
     private func saveChanges() {
@@ -115,6 +121,12 @@ struct MenuBarTodoView: View {
             try modelContext.save()
         } catch {
             assertionFailure("Unable to save menu bar task change: \(error)")
+        }
+    }
+
+    private func runDailyTaskMaintenance() {
+        if TaskDayMaintenance.rolloverUnfinishedTasksToToday(tasks, calendar: calendar) {
+            saveChanges()
         }
     }
 }

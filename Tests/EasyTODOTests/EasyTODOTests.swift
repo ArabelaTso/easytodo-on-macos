@@ -56,6 +56,43 @@ final class EasyTODOTests: XCTestCase {
         XCTAssertEqual(tasks.first?.title, "Reply email")
     }
 
+    func testCanAddMultipleTasksInARow() throws {
+        let calendar = Calendar.current
+        let today = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 8, day: 5, hour: 9)))
+        let container = try PersistenceController.modelContainer(inMemory: true)
+        let context = container.mainContext
+
+        let first = try TaskCreation.addTask(title: "First task", scheduledDate: today, in: context, calendar: calendar)
+        let second = try TaskCreation.addTask(title: "Second task", scheduledDate: today, in: context, calendar: calendar)
+        let third = try TaskCreation.addTask(title: "Third task", scheduledDate: today, in: context, calendar: calendar)
+
+        let tasks = try context.fetch(FetchDescriptor<TodoTask>())
+        let todayTasks = TaskListOrdering.ordered(tasks.filter { $0.isScheduled(on: today, calendar: calendar) })
+
+        XCTAssertNotNil(first)
+        XCTAssertNotNil(second)
+        XCTAssertNotNil(third)
+        XCTAssertEqual(todayTasks.map(\.title), ["First task", "Second task", "Third task"])
+        XCTAssertEqual(todayTasks.map(\.sortOrder), [0, 1, 2])
+    }
+
+    func testBlankTaskTitleDoesNotInterruptLaterAdds() throws {
+        let calendar = Calendar.current
+        let today = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 8, day: 5, hour: 9)))
+        let container = try PersistenceController.modelContainer(inMemory: true)
+        let context = container.mainContext
+
+        let blank = try TaskCreation.addTask(title: "   ", scheduledDate: today, in: context, calendar: calendar)
+        let task = try TaskCreation.addTask(title: "Valid task", scheduledDate: today, in: context, calendar: calendar)
+        let tasks = try context.fetch(FetchDescriptor<TodoTask>())
+
+        XCTAssertNil(blank)
+        XCTAssertNotNil(task)
+        XCTAssertEqual(tasks.count, 1)
+        XCTAssertEqual(tasks.first?.title, "Valid task")
+        XCTAssertEqual(tasks.first?.sortOrder, 0)
+    }
+
     func testNewlyCompletedTaskMovesToFrontOfCompletedTasks() {
         let first = TodoTask(title: "Read paper", sortOrder: 0)
         let second = TodoTask(title: "Reply email", sortOrder: 1)
@@ -128,5 +165,43 @@ final class EasyTODOTests: XCTestCase {
             XCTAssertEqual(tasks.first?.scheduledDate, Optional(expectedDay))
             XCTAssertTrue(try XCTUnwrap(tasks.first).isScheduled(on: futureDate, calendar: calendar))
         }
+    }
+
+    func testUnfinishedPastTasksRollOverToToday() throws {
+        let calendar = Calendar.current
+        let today = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 8, day: 5, hour: 9)))
+        let yesterday = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 8, day: 4, hour: 9)))
+        let todayTask = TodoTask(title: "Already today", sortOrder: 2, scheduledDate: today)
+        let overdueTask = TodoTask(title: "Carry forward", sortOrder: 0, scheduledDate: yesterday)
+        let completedPastTask = TodoTask(title: "Done yesterday", isCompleted: true, sortOrder: 1, scheduledDate: yesterday)
+
+        let didChange = TaskDayMaintenance.rolloverUnfinishedTasksToToday(
+            [todayTask, overdueTask, completedPastTask],
+            today: today,
+            calendar: calendar
+        )
+
+        XCTAssertTrue(didChange)
+        XCTAssertTrue(overdueTask.isScheduled(on: today, calendar: calendar))
+        XCTAssertEqual(overdueTask.sortOrder, 3)
+        XCTAssertTrue(completedPastTask.isScheduled(on: yesterday, calendar: calendar))
+    }
+
+    func testTodayAndFutureTasksDoNotRollOver() throws {
+        let calendar = Calendar.current
+        let today = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 8, day: 5, hour: 9)))
+        let tomorrow = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 8, day: 6, hour: 9)))
+        let todayTask = TodoTask(title: "Today", scheduledDate: today)
+        let futureTask = TodoTask(title: "Future", scheduledDate: tomorrow)
+
+        let didChange = TaskDayMaintenance.rolloverUnfinishedTasksToToday(
+            [todayTask, futureTask],
+            today: today,
+            calendar: calendar
+        )
+
+        XCTAssertFalse(didChange)
+        XCTAssertTrue(todayTask.isScheduled(on: today, calendar: calendar))
+        XCTAssertTrue(futureTask.isScheduled(on: tomorrow, calendar: calendar))
     }
 }

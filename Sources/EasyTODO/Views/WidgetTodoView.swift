@@ -1,3 +1,4 @@
+import Foundation
 import SwiftData
 import SwiftUI
 
@@ -11,6 +12,7 @@ struct WidgetTodoView: View {
     @AppStorage(EasyTODOSettings.theme) private var theme = ThemeOption.light.rawValue
 
     private let calendar = Calendar.current
+    private let dayRefreshTimer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
 
     private var todayTasks: [TodoTask] {
         tasks.filter { task in
@@ -20,14 +22,6 @@ struct WidgetTodoView: View {
 
     private var orderedTasks: [TodoTask] {
         TaskListOrdering.ordered(todayTasks)
-    }
-
-    private var visibleTasks: [TodoTask] {
-        Array(orderedTasks.prefix(5))
-    }
-
-    private var hiddenTaskCount: Int {
-        max(orderedTasks.count - visibleTasks.count, 0)
     }
 
     private var activeCount: Int {
@@ -82,14 +76,18 @@ struct WidgetTodoView: View {
         .onTapGesture(count: 2) {
             WindowManager.shared.showMainWindow()
         }
+        .onAppear(perform: runDailyTaskMaintenance)
+        .onReceive(dayRefreshTimer) { _ in
+            runDailyTaskMaintenance()
+        }
         .preferredColorScheme(preferredColorScheme)
     }
 
     private var header: some View {
         HStack(alignment: .center, spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Today")
-                    .font(.system(size: 18, weight: .semibold))
+                Text("Today's TODOs")
+                    .font(.system(size: 13, weight: .semibold))
 
                 Text("\(activeCount) active - \(completedCount) done")
                     .font(.system(size: 11, weight: .medium))
@@ -140,19 +138,16 @@ struct WidgetTodoView: View {
     }
 
     private var taskList: some View {
-        VStack(spacing: 7) {
-            ForEach(visibleTasks) { task in
-                taskButton(for: task)
+        ScrollView(.vertical) {
+            LazyVStack(spacing: 7) {
+                ForEach(orderedTasks) { task in
+                    taskButton(for: task)
+                }
             }
-
-            if hiddenTaskCount > 0 {
-                Text("+ \(hiddenTaskCount) more in the main app")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, 2)
-            }
+            .padding(.trailing, 4)
         }
+        .frame(maxHeight: 190)
+        .scrollIndicators(.visible)
     }
 
     private var footer: some View {
@@ -243,6 +238,12 @@ struct WidgetTodoView: View {
             try modelContext.save()
         } catch {
             assertionFailure("Unable to save widget task change: \(error)")
+        }
+    }
+
+    private func runDailyTaskMaintenance() {
+        if TaskDayMaintenance.rolloverUnfinishedTasksToToday(tasks, calendar: calendar) {
+            saveChanges()
         }
     }
 

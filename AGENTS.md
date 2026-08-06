@@ -21,6 +21,7 @@ Use SwiftPM commands from the repository root:
 - `swift build` builds the native macOS app.
 - `swift run EasyTODO` launches the desktop app.
 - `swift test` runs the XCTest suite.
+- To start the app from source, run `swift run EasyTODO` from the repository root; if an older debug app is already running, find it with `ps -Ao pid,etime,command | rg 'EasyTODO|\.build/.*/EasyTODO'`, stop that PID with `kill <pid>`, then run `swift run EasyTODO` again.
 
 Keep command examples updated when packaging changes, such as adding an Xcode project.
 

@@ -158,6 +158,7 @@ Reverse chronological history, based on Git commits.
 
 | Commit | Tag | Notes |
 | --- | --- | --- |
+| `v1.0.0` | ![release](https://img.shields.io/badge/-release-8250df?style=flat-square) | Prepared the 1.0.0 release with refreshed quick add, widget scrolling, daily rollover, and title editing fixes. |
 | `67d0e54` | ![release](https://img.shields.io/badge/-release-8250df?style=flat-square) | Added macOS app packaging, DMG generation, and GitHub release automation. |
 | `1f5150d` | ![feature](https://img.shields.io/badge/-feature-2da44e?style=flat-square) | Added compact desktop widget mode. |
 | `a321623` | ![docs](https://img.shields.io/badge/-docs-0969da?style=flat-square) | Updated the README product guide. |
