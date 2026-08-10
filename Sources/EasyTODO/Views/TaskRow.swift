@@ -81,15 +81,12 @@ struct TaskRow: View {
             )
             .frame(maxWidth: .infinity, minHeight: 22)
         } else {
-            Text(task.title.isEmpty ? "Untitled task" : task.title)
-                .font(.system(size: 15, weight: .regular, design: .default))
-                .strikethrough(task.isCompleted, color: .secondary)
-                .foregroundStyle(task.isCompleted ? .secondary : .primary)
-                .lineLimit(1)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .contentShape(Rectangle())
-                .onTapGesture(count: 2, perform: beginTitleEdit)
-                .help("Double-click to edit")
+            FloatingTaskTitle(
+                title: task.title,
+                isCompleted: task.isCompleted,
+                font: .system(size: 15, weight: .regular, design: .default),
+                onDoubleClick: beginTitleEdit
+            )
         }
     }
 

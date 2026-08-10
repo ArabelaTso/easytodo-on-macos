@@ -159,8 +159,12 @@ struct MenuBarTodoView: View {
                     Image(systemName: task.isCompleted ? "checkmark.circle.fill" : "circle")
                         .foregroundStyle(task.isCompleted ? Color.accentColor : Color.secondary)
 
-                    Text(task.title.isEmpty ? "Untitled task" : task.title)
-                        .lineLimit(1)
+                    FloatingTaskTitle(
+                        title: task.title,
+                        isCompleted: task.isCompleted,
+                        font: .system(size: 13, weight: .regular, design: .default),
+                        longTitleThreshold: 20
+                    )
 
                     Spacer()
                 }

@@ -199,11 +199,12 @@ struct WidgetTodoView: View {
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(task.isCompleted ? Color.accentColor : Color.secondary)
 
-                Text(task.title.isEmpty ? "Untitled task" : task.title)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(task.isCompleted ? .secondary : .primary)
-                    .strikethrough(task.isCompleted, color: .secondary)
-                    .lineLimit(1)
+                FloatingTaskTitle(
+                    title: task.title,
+                    isCompleted: task.isCompleted,
+                    font: .system(size: 13, weight: .medium),
+                    longTitleThreshold: 18
+                )
 
                 Spacer(minLength: 0)
             }

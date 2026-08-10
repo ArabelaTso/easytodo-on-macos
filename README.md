@@ -1,4 +1,5 @@
 <div align="center">
+
   <img src="logo/logo.png" alt="EasyTODO logo" width="96" />
   <h1>EasyTODO: The simplest free TODO list for macOS.</h1>
   <h2><strong>Simple. Free. Always on your desktop. MacOS 14 or above.</strong></h2>
@@ -10,7 +11,10 @@
     <img alt="Local first" src="https://img.shields.io/badge/local--first-no%20cloud-2EA44F?style=for-the-badge" />
     <img alt="License" src="https://img.shields.io/badge/license-MIT-6E7781?style=for-the-badge" />
   </p>
-  <p><code>capture -> prioritize -> complete -> stay in flow</code></p>
+  <p>
+    <a href="https://www.producthunt.com/products/github-469?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-github-111cb834-3990-44a2-b502-38317a735e1a" target="_blank" rel="noopener noreferrer"><img alt="GitHub - todo-list widget on MacOS desktop and menu bar | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1219356&amp;theme=light&amp;t=1786357788671"></a>
+  </p>
+
 </div>
 
 EasyTODO is a native macOS desktop todo app designed to stay visible, feel lightweight, and make capture fast. It removes the tedious setup common in task apps: no workspace setup, no cloud account, no project-management ceremony. Just today's tasks, always close at hand.
@@ -174,6 +178,7 @@ Reverse chronological history, based on Git commits.
 
 | Commit | Tag | Notes |
 | --- | --- | --- |
+| `v1.0.2` | ![release](https://img.shields.io/badge/-release-8250df?style=flat-square) | Added the Product Hunt badge and long-task floating text previews on hover. |
 | `v1.0.1` | ![release](https://img.shields.io/badge/-release-8250df?style=flat-square) | Added menu bar quick add, delete confirmation, scrollable menu bar tasks, source launch docs, and transparent Quick Add corners. |
 | `v1.0.0` | ![release](https://img.shields.io/badge/-release-8250df?style=flat-square) | Prepared the 1.0.0 release with refreshed quick add, widget scrolling, daily rollover, and title editing fixes. |
 | `67d0e54` | ![release](https://img.shields.io/badge/-release-8250df?style=flat-square) | Added macOS app packaging, DMG generation, and GitHub release automation. |
