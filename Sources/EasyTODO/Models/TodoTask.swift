@@ -9,6 +9,8 @@ final class TodoTask {
     var createdAt: Date
     var scheduledDate: Date?
     var priorityRawValue: String?
+    var repeatRuleRawValue: String?
+    var recurrenceGroupID: String?
 
     init(
         title: String,
@@ -16,7 +18,9 @@ final class TodoTask {
         sortOrder: Int = 0,
         createdAt: Date = .now,
         scheduledDate: Date = .now,
-        priority: TaskPriority = .notUrgentImportant
+        priority: TaskPriority = .notUrgentImportant,
+        repeatRule: TaskRepeatRule = .none,
+        recurrenceGroupID: String? = nil
     ) {
         self.title = title
         self.isCompleted = isCompleted
@@ -24,6 +28,8 @@ final class TodoTask {
         self.createdAt = createdAt
         self.scheduledDate = Calendar.current.startOfDay(for: scheduledDate)
         self.priorityRawValue = priority.rawValue
+        self.repeatRuleRawValue = repeatRule.rawValue
+        self.recurrenceGroupID = recurrenceGroupID
     }
 
     var priority: TaskPriority {
@@ -32,6 +38,15 @@ final class TodoTask {
         }
         set {
             priorityRawValue = newValue.rawValue
+        }
+    }
+
+    var repeatRule: TaskRepeatRule {
+        get {
+            TaskRepeatRule.normalized(from: repeatRuleRawValue)
+        }
+        set {
+            repeatRuleRawValue = newValue.rawValue
         }
     }
 

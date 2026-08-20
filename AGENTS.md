@@ -46,3 +46,5 @@ Pull requests should include a concise summary, screenshots or screen recordings
 ## Agent-Specific Instructions
 
 Keep generated documentation concise and aligned with the current repo state. Do not describe future app capabilities as complete unless source and tests support them.
+
+After adding or changing app functionality, always restart the running EasyTODO app from source so the latest changes are active locally.

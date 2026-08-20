@@ -178,6 +178,7 @@ Reverse chronological history, based on Git commits.
 
 | Commit | Tag | Notes |
 | --- | --- | --- |
+| `v1.0.3` | ![release](https://img.shields.io/badge/-release-8250df?style=flat-square) | Added task context editing, priority sorting, date moves, repeat scheduling, and the agent restart rule. |
 | `v1.0.2` | ![release](https://img.shields.io/badge/-release-8250df?style=flat-square) | Added the Product Hunt badge and long-task floating text previews on hover. |
 | `v1.0.1` | ![release](https://img.shields.io/badge/-release-8250df?style=flat-square) | Added menu bar quick add, delete confirmation, scrollable menu bar tasks, source launch docs, and transparent Quick Add corners. |
 | `v1.0.0` | ![release](https://img.shields.io/badge/-release-8250df?style=flat-square) | Prepared the 1.0.0 release with refreshed quick add, widget scrolling, daily rollover, and title editing fixes. |

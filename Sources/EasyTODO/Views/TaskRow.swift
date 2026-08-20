@@ -6,6 +6,8 @@ struct TaskRow: View {
     @Bindable var task: TodoTask
     var onUpdate: () -> Void
     var onCompletionChanged: (_ task: TodoTask, _ oldValue: Bool, _ newValue: Bool) -> Void
+    var onMoveToDate: ((_ task: TodoTask, _ date: Date) -> Void)? = nil
+    var onRepeatRuleChanged: ((_ task: TodoTask, _ repeatRule: TaskRepeatRule) -> Void)? = nil
     var onDelete: () -> Void
 
     @State private var isHoveringDelete = false
@@ -13,6 +15,10 @@ struct TaskRow: View {
     @State private var isEditingTitle = false
     @State private var draftTitle = ""
     @State private var editFocusRequest = 0
+    @State private var isMoveDatePresented = false
+    @State private var moveDate = Date()
+
+    private let calendar = Calendar.current
 
     var body: some View {
         HStack(spacing: 10) {
@@ -68,6 +74,12 @@ struct TaskRow: View {
         }
         .padding(.vertical, 7)
         .contentShape(Rectangle())
+        .contextMenu {
+            taskContextMenu
+        }
+        .popover(isPresented: $isMoveDatePresented, arrowEdge: .trailing) {
+            moveDatePopover
+        }
     }
 
     @ViewBuilder
@@ -84,9 +96,11 @@ struct TaskRow: View {
             FloatingTaskTitle(
                 title: task.title,
                 isCompleted: task.isCompleted,
-                font: .system(size: 15, weight: .regular, design: .default),
+                fontSize: 15,
+                fontWeight: .regular,
                 onDoubleClick: beginTitleEdit
             )
+            .frame(maxWidth: .infinity, minHeight: 22)
         }
     }
 
@@ -107,6 +121,86 @@ struct TaskRow: View {
     private func cancelTitleEdit() {
         isEditingTitle = false
         draftTitle = task.title
+    }
+
+    @ViewBuilder
+    private var taskContextMenu: some View {
+        Button {
+            beginTitleEdit()
+        } label: {
+            Label("Edit", systemImage: "pencil")
+        }
+
+        if onMoveToDate != nil {
+            Divider()
+
+            Button {
+                moveTaskToTomorrow()
+            } label: {
+                Label("Move to Tomorrow", systemImage: "calendar.badge.clock")
+            }
+
+            Button {
+                moveDate = task.scheduledDay(in: calendar)
+                isMoveDatePresented = true
+            } label: {
+                Label("Move to...", systemImage: "calendar")
+            }
+        }
+
+        if onRepeatRuleChanged != nil {
+            Divider()
+
+            Menu {
+                repeatRuleButton(.none)
+                repeatRuleButton(.daily)
+                repeatRuleButton(.weekly)
+            } label: {
+                Label("Repeat", systemImage: "repeat")
+            }
+        }
+    }
+
+    private var moveDatePopover: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            DatePicker("Move Date", selection: $moveDate, displayedComponents: .date)
+                .datePickerStyle(.graphical)
+                .labelsHidden()
+
+            HStack {
+                Button("Cancel") {
+                    isMoveDatePresented = false
+                }
+                .keyboardShortcut(.cancelAction)
+
+                Spacer()
+
+                Button("Move") {
+                    onMoveToDate?(task, moveDate)
+                    isMoveDatePresented = false
+                }
+                .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(14)
+        .frame(width: 260)
+    }
+
+    private func repeatRuleButton(_ repeatRule: TaskRepeatRule) -> some View {
+        Button {
+            onRepeatRuleChanged?(task, repeatRule)
+        } label: {
+            if task.repeatRule == repeatRule {
+                Label(repeatRule.title, systemImage: "checkmark")
+            } else {
+                Text(repeatRule.title)
+            }
+        }
+    }
+
+    private func moveTaskToTomorrow() {
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: task.scheduledDay(in: calendar)) ?? .now
+        onMoveToDate?(task, tomorrow)
     }
 
     private var confirmDeleteMessage: String {
@@ -140,6 +234,7 @@ private struct InlineTaskTitleTextField: NSViewRepresentable {
         textField.isBordered = false
         textField.drawsBackground = false
         textField.isEditable = true
+        textField.isEnabled = true
         textField.isSelectable = true
         textField.focusRingType = .none
         textField.font = NSFont.systemFont(ofSize: 15, weight: .regular)

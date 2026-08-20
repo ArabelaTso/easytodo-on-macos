@@ -7,6 +7,10 @@ enum TaskListOrdering {
                 return !lhs.isCompleted && rhs.isCompleted
             }
 
+            if lhs.priority.prioritySortRank != rhs.priority.prioritySortRank {
+                return lhs.priority.prioritySortRank < rhs.priority.prioritySortRank
+            }
+
             if lhs.sortOrder != rhs.sortOrder {
                 return lhs.sortOrder < rhs.sortOrder
             }

@@ -21,6 +21,19 @@ enum TaskPriority: String, CaseIterable, Identifiable {
         }
     }
 
+    var prioritySortRank: Int {
+        switch self {
+        case .importantUrgent:
+            0
+        case .urgentNotImportant:
+            1
+        case .notUrgentImportant:
+            2
+        case .notUrgentNotImportant:
+            3
+        }
+    }
+
     static func normalized(from rawValue: String?) -> TaskPriority {
         guard let rawValue else { return .notUrgentImportant }
 

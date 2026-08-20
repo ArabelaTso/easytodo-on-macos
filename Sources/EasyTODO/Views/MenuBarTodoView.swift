@@ -162,7 +162,8 @@ struct MenuBarTodoView: View {
                     FloatingTaskTitle(
                         title: task.title,
                         isCompleted: task.isCompleted,
-                        font: .system(size: 13, weight: .regular, design: .default),
+                        fontSize: 13,
+                        fontWeight: .regular,
                         longTitleThreshold: 20
                     )
 

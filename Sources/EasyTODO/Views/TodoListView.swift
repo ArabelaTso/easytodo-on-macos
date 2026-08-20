@@ -89,7 +89,9 @@ struct TodoListView: View {
                             TaskRow(
                                 task: task,
                                 onUpdate: saveChanges,
-                                onCompletionChanged: handleCompletionChange
+                                onCompletionChanged: handleCompletionChange,
+                                onMoveToDate: moveTask,
+                                onRepeatRuleChanged: updateRepeatRule
                             ) {
                                 delete(task)
                             }
@@ -403,6 +405,25 @@ struct TodoListView: View {
         saveChanges()
     }
 
+    private func moveTask(_ task: TodoTask, to date: Date) {
+        TaskScheduling.move(task, to: date, among: tasks, calendar: calendar)
+        saveChanges()
+    }
+
+    private func updateRepeatRule(_ task: TodoTask, to repeatRule: TaskRepeatRule) {
+        do {
+            try TaskRepeatScheduler.setRepeatRule(
+                repeatRule,
+                for: task,
+                tasks: tasks,
+                in: modelContext,
+                calendar: calendar
+            )
+        } catch {
+            assertionFailure("Unable to update task repeat rule: \(error)")
+        }
+    }
+
     private func handleCompletionChange(task: TodoTask, oldValue: Bool, newValue: Bool) {
         let taskDate = task.scheduledDay(in: calendar)
 
@@ -485,6 +506,8 @@ private struct DeletedTaskSnapshot {
     let createdAt: Date
     let scheduledDate: Date
     let priority: TaskPriority
+    let repeatRule: TaskRepeatRule
+    let recurrenceGroupID: String?
 
     init(task: TodoTask, calendar: Calendar) {
         title = task.title
@@ -493,6 +516,8 @@ private struct DeletedTaskSnapshot {
         createdAt = task.createdAt
         scheduledDate = task.scheduledDay(in: calendar)
         priority = task.priority
+        repeatRule = task.repeatRule
+        recurrenceGroupID = task.recurrenceGroupID
     }
 
     func task() -> TodoTask {
@@ -502,7 +527,9 @@ private struct DeletedTaskSnapshot {
             sortOrder: sortOrder,
             createdAt: createdAt,
             scheduledDate: scheduledDate,
-            priority: priority
+            priority: priority,
+            repeatRule: repeatRule,
+            recurrenceGroupID: recurrenceGroupID
         )
     }
 }

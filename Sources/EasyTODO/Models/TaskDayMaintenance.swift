@@ -32,7 +32,7 @@ enum TaskDayMaintenance {
 
         let overdueTasks = tasks
             .filter { task in
-                !task.isCompleted && task.scheduledDay(in: calendar) < todayStart
+                !task.isCompleted && task.repeatRule == .none && task.scheduledDay(in: calendar) < todayStart
             }
             .sorted { lhs, rhs in
                 let lhsDay = lhs.scheduledDay(in: calendar)

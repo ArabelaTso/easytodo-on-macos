@@ -1,76 +1,120 @@
 @preconcurrency import AppKit
 import SwiftUI
 
-struct FloatingTaskTitle: View {
+struct FloatingTaskTitle: NSViewRepresentable {
     let title: String
     var isCompleted = false
-    var font: Font = .system(size: 15, weight: .regular, design: .default)
+    var fontSize: CGFloat = 15
+    var fontWeight: NSFont.Weight = .regular
     var longTitleThreshold = 24
     var onDoubleClick: (() -> Void)?
 
-    @State private var isHovering = false
+    func makeNSView(context: Context) -> FloatingTaskTitleView {
+        let view = FloatingTaskTitleView()
+        view.update(
+            title: displayTitle,
+            isCompleted: isCompleted,
+            font: .systemFont(ofSize: fontSize, weight: fontWeight),
+            longTitleThreshold: longTitleThreshold,
+            onDoubleClick: onDoubleClick
+        )
+        return view
+    }
+
+    func updateNSView(_ nsView: FloatingTaskTitleView, context: Context) {
+        nsView.update(
+            title: displayTitle,
+            isCompleted: isCompleted,
+            font: .systemFont(ofSize: fontSize, weight: fontWeight),
+            longTitleThreshold: longTitleThreshold,
+            onDoubleClick: onDoubleClick
+        )
+    }
 
     private var displayTitle: String {
         title.isEmpty ? "Untitled task" : title
     }
-
-    private var shouldShowFloatingText: Bool {
-        displayTitle.count > longTitleThreshold && isHovering
-    }
-
-    var body: some View {
-        if let onDoubleClick {
-            titleView
-                .onTapGesture(count: 2, perform: onDoubleClick)
-        } else {
-            titleView
-        }
-    }
-
-    private var titleView: some View {
-        Text(displayTitle)
-            .font(font)
-            .foregroundStyle(isCompleted ? Color.secondary : Color.primary)
-            .strikethrough(isCompleted, color: .secondary)
-            .lineLimit(1)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
-            .onHover { hovering in
-                guard displayTitle.count > longTitleThreshold else { return }
-                isHovering = hovering
-            }
-            .background {
-                FloatingTextPresenter(text: displayTitle, isPresented: shouldShowFloatingText)
-            }
-            .help(displayTitle)
-    }
 }
 
-private struct FloatingTextPresenter: NSViewRepresentable {
-    let text: String
-    let isPresented: Bool
-
-    func makeNSView(context: Context) -> FloatingTextAnchorView {
-        FloatingTextAnchorView()
-    }
-
-    func updateNSView(_ nsView: FloatingTextAnchorView, context: Context) {
-        nsView.update(text: text, isPresented: isPresented)
-    }
-}
-
-private final class FloatingTextAnchorView: NSView {
+final class FloatingTaskTitleView: NSView {
+    private let label = NSTextField(labelWithString: "")
+    private var trackingArea: NSTrackingArea?
     private var panel: NSPanel?
-    private var currentText = ""
+    private var title = ""
+    private var isCompleted = false
+    private var font = NSFont.systemFont(ofSize: 15, weight: .regular)
+    private var longTitleThreshold = 24
+    private var onDoubleClick: (() -> Void)?
 
-    func update(text: String, isPresented: Bool) {
-        currentText = text
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
 
-        if isPresented {
-            showPanel(text: text)
-        } else {
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.lineBreakMode = .byTruncatingTail
+        label.maximumNumberOfLines = 1
+        label.isSelectable = false
+        label.drawsBackground = false
+        label.isBordered = false
+        label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        label.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        addSubview(label)
+
+        NSLayoutConstraint.activate([
+            label.leadingAnchor.constraint(equalTo: leadingAnchor),
+            label.trailingAnchor.constraint(equalTo: trailingAnchor),
+            label.centerYAnchor.constraint(equalTo: centerYAnchor)
+        ])
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override var acceptsFirstResponder: Bool { true }
+
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
+        true
+    }
+
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        guard onDoubleClick != nil, bounds.contains(point) else { return nil }
+        return self
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        if event.clickCount >= 2 {
             hidePanel()
+            onDoubleClick?()
+            return
         }
+
+        super.mouseDown(with: event)
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+
+        if let trackingArea {
+            removeTrackingArea(trackingArea)
+        }
+
+        let area = NSTrackingArea(
+            rect: bounds,
+            options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+            owner: self,
+            userInfo: nil
+        )
+        addTrackingArea(area)
+        trackingArea = area
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        guard shouldShowFloatingText else { return }
+        showPanel()
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        hidePanel()
     }
 
     override func viewDidMoveToWindow() {
@@ -81,12 +125,49 @@ private final class FloatingTextAnchorView: NSView {
         }
     }
 
-    private func showPanel(text: String) {
-        guard let window, let frame = floatingFrame(for: text) else { return }
+    func update(
+        title: String,
+        isCompleted: Bool,
+        font: NSFont,
+        longTitleThreshold: Int,
+        onDoubleClick: (() -> Void)?
+    ) {
+        self.title = title
+        self.isCompleted = isCompleted
+        self.font = font
+        self.longTitleThreshold = longTitleThreshold
+        self.onDoubleClick = onDoubleClick
+
+        label.attributedStringValue = attributedTitle(title, isCompleted: isCompleted)
+        label.toolTip = title
+
+        if !shouldShowFloatingText {
+            hidePanel()
+        }
+    }
+
+    private var shouldShowFloatingText: Bool {
+        title.count > longTitleThreshold
+    }
+
+    private func attributedTitle(_ title: String, isCompleted: Bool) -> NSAttributedString {
+        let color = isCompleted ? NSColor.secondaryLabelColor : NSColor.labelColor
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: color,
+            .strikethroughStyle: isCompleted ? NSUnderlineStyle.single.rawValue : 0,
+            .strikethroughColor: NSColor.secondaryLabelColor
+        ]
+        return NSAttributedString(string: title, attributes: attributes)
+    }
+
+    private func showPanel() {
+        guard let window, let frame = floatingFrame(), frame.width > 0, frame.height > 0 else { return }
 
         let panel = panel ?? makePanel()
         panel.appearance = window.effectiveAppearance
-        panel.contentView = labelView(text: text, size: frame.size)
+        panel.level = NSWindow.Level(rawValue: max(NSWindow.Level.floating.rawValue, window.level.rawValue + 1))
+        panel.contentView = labelView(size: frame.size)
         panel.setFrame(frame, display: true)
         panel.orderFrontRegardless()
         self.panel = panel
@@ -108,14 +189,13 @@ private final class FloatingTextAnchorView: NSView {
         panel.backgroundColor = .clear
         panel.hasShadow = false
         panel.ignoresMouseEvents = true
-        panel.level = .floating
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient, .ignoresCycle]
         panel.isReleasedWhenClosed = false
         return panel
     }
 
-    private func labelView(text: String, size: NSSize) -> NSView {
-        let label = NSTextField(labelWithString: text)
+    private func labelView(size: NSSize) -> NSView {
+        let label = NSTextField(labelWithString: title)
         label.font = .systemFont(ofSize: 12, weight: .medium)
         label.textColor = .labelColor
         label.drawsBackground = false
@@ -127,10 +207,10 @@ private final class FloatingTextAnchorView: NSView {
         return label
     }
 
-    private func floatingFrame(for text: String) -> NSRect? {
-        guard let window else { return nil }
+    private func floatingFrame() -> NSRect? {
+        guard let window, !bounds.isEmpty else { return nil }
 
-        let size = labelSize(for: text)
+        let size = labelSize()
         let rectInWindow = convert(bounds, to: nil)
         let originOnScreen = window.convertPoint(toScreen: rectInWindow.origin)
         let sourceFrame = NSRect(origin: originOnScreen, size: rectInWindow.size)
@@ -147,15 +227,15 @@ private final class FloatingTextAnchorView: NSView {
         return NSRect(origin: NSPoint(x: x, y: max(y, visibleFrame.minY + margin)), size: size)
     }
 
-    private func labelSize(for text: String) -> NSSize {
+    private func labelSize() -> NSSize {
         let maxWidth: CGFloat = 280
-        let font = NSFont.systemFont(ofSize: 12, weight: .medium)
-        let attributes: [NSAttributedString.Key: Any] = [.font: font]
-        let bounds = NSAttributedString(string: text, attributes: attributes).boundingRect(
+        let floatingFont = NSFont.systemFont(ofSize: 12, weight: .medium)
+        let attributes: [NSAttributedString.Key: Any] = [.font: floatingFont]
+        let bounds = NSAttributedString(string: title, attributes: attributes).boundingRect(
             with: NSSize(width: maxWidth, height: .greatestFiniteMagnitude),
             options: [.usesLineFragmentOrigin, .usesFontLeading]
         )
-        let lineHeight = ceil(font.ascender - font.descender + font.leading)
+        let lineHeight = ceil(floatingFont.ascender - floatingFont.descender + floatingFont.leading)
         let width = min(max(ceil(bounds.width), 72), maxWidth)
         let height = min(max(ceil(bounds.height), lineHeight), lineHeight * 8)
 

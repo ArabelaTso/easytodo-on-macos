@@ -202,7 +202,8 @@ struct WidgetTodoView: View {
                 FloatingTaskTitle(
                     title: task.title,
                     isCompleted: task.isCompleted,
-                    font: .system(size: 13, weight: .medium),
+                    fontSize: 13,
+                    fontWeight: .medium,
                     longTitleThreshold: 18
                 )
 

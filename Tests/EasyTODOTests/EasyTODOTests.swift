@@ -35,6 +35,16 @@ final class EasyTODOTests: XCTestCase {
         XCTAssertEqual(task.priority, .notUrgentImportant)
     }
 
+    func testTaskCanStoreRepeatRule() {
+        let task = TodoTask(title: "Standup", repeatRule: .daily)
+
+        XCTAssertEqual(task.repeatRule, .daily)
+
+        task.repeatRule = .weekly
+
+        XCTAssertEqual(task.repeatRule, .weekly)
+    }
+
     func testLegacyPriorityValuesAreMapped() {
         XCTAssertEqual(TaskPriority.normalized(from: "urgent"), .importantUrgent)
         XCTAssertEqual(TaskPriority.normalized(from: "high"), .notUrgentImportant)
@@ -91,6 +101,48 @@ final class EasyTODOTests: XCTestCase {
         XCTAssertEqual(tasks.count, 1)
         XCTAssertEqual(tasks.first?.title, "Valid task")
         XCTAssertEqual(tasks.first?.sortOrder, 0)
+    }
+
+    func testTasksAreOrderedByPriorityThenAddOrder() {
+        let firstGreen = TodoTask(title: "First green", sortOrder: 0, priority: .notUrgentImportant)
+        let red = TodoTask(title: "Red", sortOrder: 1, priority: .importantUrgent)
+        let yellow = TodoTask(title: "Yellow", sortOrder: 2, priority: .urgentNotImportant)
+        let secondGreen = TodoTask(title: "Second green", sortOrder: 3, priority: .notUrgentImportant)
+
+        XCTAssertEqual(
+            TaskListOrdering.ordered([firstGreen, red, yellow, secondGreen]).map(\.title),
+            ["Red", "Yellow", "First green", "Second green"]
+        )
+    }
+
+    func testTaskCanMoveToAnotherDate() throws {
+        let calendar = Calendar.current
+        let today = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 8, day: 5, hour: 9)))
+        let tomorrow = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 8, day: 6, hour: 9)))
+        let existingTomorrowTask = TodoTask(title: "Tomorrow first", sortOrder: 0, scheduledDate: tomorrow)
+        let task = TodoTask(title: "Move me", sortOrder: 0, scheduledDate: today)
+
+        TaskScheduling.move(task, to: tomorrow, among: [existingTomorrowTask, task], calendar: calendar)
+
+        XCTAssertTrue(task.isScheduled(on: tomorrow, calendar: calendar))
+        XCTAssertEqual(task.sortOrder, 1)
+    }
+
+    func testDailyRepeatCreatesUpcomingOccurrences() throws {
+        let calendar = Calendar.current
+        let today = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 8, day: 5, hour: 9)))
+        let container = try PersistenceController.modelContainer(inMemory: true)
+        let context = container.mainContext
+        let task = TodoTask(title: "Drink water", sortOrder: 0, scheduledDate: today)
+        context.insert(task)
+
+        try TaskRepeatScheduler.setRepeatRule(.daily, for: task, tasks: [task], in: context, calendar: calendar)
+
+        let tasks = try context.fetch(FetchDescriptor<TodoTask>())
+        let tomorrow = try XCTUnwrap(calendar.date(byAdding: .day, value: 1, to: today))
+
+        XCTAssertEqual(task.repeatRule, .daily)
+        XCTAssertEqual(tasks.filter { $0.isScheduled(on: tomorrow, calendar: calendar) }.count, 1)
     }
 
     func testNewlyCompletedTaskMovesToFrontOfCompletedTasks() {
