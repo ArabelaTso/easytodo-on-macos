@@ -10,6 +10,7 @@ struct WidgetTodoView: View {
     ]) private var tasks: [TodoTask]
 
     @AppStorage(EasyTODOSettings.theme) private var theme = ThemeOption.light.rawValue
+    @AppStorage(EasyTODOSettings.widgetTransparency) private var widgetTransparency = 0.80
 
     private let calendar = Calendar.current
     private let dayRefreshTimer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
@@ -60,19 +61,6 @@ struct WidgetTodoView: View {
         }
         .shadow(color: .black.opacity(0.10), radius: 18, x: 0, y: 10)
         .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .contextMenu {
-            Button {
-                WindowManager.shared.showMainWindow()
-            } label: {
-                Label("Open Main App", systemImage: "rectangle.expand.vertical")
-            }
-
-            Button {
-                WidgetWindowManager.shared.closeWidget()
-            } label: {
-                Label("Close Widget", systemImage: "xmark")
-            }
-        }
         .onTapGesture(count: 2) {
             WindowManager.shared.showMainWindow()
         }
@@ -171,13 +159,20 @@ struct WidgetTodoView: View {
     private var widgetSurface: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(nsColor: .windowBackgroundColor))
+                .opacity(0.08 + widgetTransparency * 0.16)
+
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(.ultraThinMaterial)
-                .opacity(0.22)
+                .opacity(0.18 + widgetTransparency * 0.12)
+
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(.primary.opacity(0.02 + widgetTransparency * 0.025))
 
             LinearGradient(
                 colors: [
-                    Color.white.opacity(0.08),
-                    Color(red: 1.0, green: 0.78, blue: 0.35).opacity(0.06),
+                    Color.white.opacity(0.06),
+                    Color(red: 1.0, green: 0.78, blue: 0.35).opacity(0.04),
                     Color.clear
                 ],
                 startPoint: .topLeading,

@@ -6,6 +6,7 @@ enum EasyTODOSettings {
     static let showMenuBar = "showMenuBar"
     static let hiddenDockIcon = "hiddenDockIcon"
     static let transparency = "transparency"
+    static let widgetTransparency = "widgetTransparency"
     static let theme = "theme"
 
     static func registerDefaults() {
@@ -16,6 +17,7 @@ enum EasyTODOSettings {
             showMenuBar: true,
             hiddenDockIcon: false,
             transparency: 0.80,
+            widgetTransparency: 0.80,
             theme: ThemeOption.light.rawValue
         ])
 
